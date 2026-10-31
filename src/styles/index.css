@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+
+  /* Anthracite / night-blue base */
+  --color-night-950: #0a0e16;
+  --color-night-900: #0f1520;
+  --color-night-800: #161e2c;
+  --color-night-700: #212b3d;
+  --color-night-600: #2f3b52;
+
+  /* Accents, used sparingly */
+  --color-gold-300: #e6cd8f;
+  --color-gold-400: #d1ad5b;
+  --color-frost-300: #a6cdee;
+  --color-frost-400: #6fa8d6;
+
+  /* Data states (README section 8) */
+  --color-profit: #5fcf8a;
+  --color-loss: #ef6f6f;
+  --color-missing: #9aa3b2;
+  --color-stale: #e9b44c;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-night-950);
+  color: #d7dde8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers must line up in tables and cards. */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-frost-400);
+  outline-offset: 2px;
+}

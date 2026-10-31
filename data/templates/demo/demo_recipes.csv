@@ -1,0 +1,4 @@
+recipe_key,output_item,output_quantity,game_region,verification_status,profession,required_level,craft_fee,game_version,last_verified_at,notes,source_name,source_type,source_url,ingredient_item,ingredient_quantity
+demo-ingot,DEMO Ingot,2,OTHER,unverified,DEMO Smithing,1,10,,,FICTIONAL demo recipe,Fictional demo data,demo,,DEMO Ore,3
+demo-sword,DEMO Sword,1,OTHER,unverified,DEMO Smithing,5,50,,,FICTIONAL demo recipe,Fictional demo data,demo,,DEMO Ingot,3
+demo-sword,DEMO Sword,1,OTHER,unverified,DEMO Smithing,5,50,,,FICTIONAL demo recipe,Fictional demo data,demo,,DEMO Leather,1

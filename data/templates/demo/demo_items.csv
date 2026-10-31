@@ -1,0 +1,5 @@
+name,game_region,verification_status,category,game_version,last_verified_at,description,source_name,source_type,source_url
+DEMO Ore,OTHER,unverified,DEMO Materials,,,FICTIONAL demo item - not an AION 2 item,Fictional demo data,demo,
+DEMO Leather,OTHER,unverified,DEMO Materials,,,FICTIONAL demo item - not an AION 2 item,Fictional demo data,demo,
+DEMO Ingot,OTHER,unverified,DEMO Components,,,FICTIONAL demo item - not an AION 2 item,Fictional demo data,demo,
+DEMO Sword,OTHER,unverified,DEMO Weapons,,,FICTIONAL demo item - not an AION 2 item,Fictional demo data,demo,
