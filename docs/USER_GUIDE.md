@@ -58,6 +58,13 @@ file, check the summary, then **Write**. Recipes are Global `community` with the
 quantities of the file. The Profit scanner then ranks every recipe whose materials and result have
 a price on the selected market.
 
+**Language**: the EN | FR switch at the bottom of the menu changes the interface language; item
+names are shown in French too when a translation exists (hover a name to see the English one).
+Search boxes accept both languages.
+
+Item icons appear next to item names (tables, crafting tree, search suggestions). They are part of
+the app (no internet needed); an item without an icon shows a letter tile.
+
 **Import Splendent crafts** (Market page, aion2.exchange markets) adds one recipe per Artisan's
 Splendent item for that server's race: Global, status `community`, quantities = the model's
 expected materials rounded up to whole units, craft fee empty (unknown). Results stay

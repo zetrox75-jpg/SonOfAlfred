@@ -111,6 +111,18 @@ How it is mapped:
 Not known: the region (not stated; English names match aion2.exchange Global items), the game
 version, licence or terms, how the data is collected, whether a fee of 0 means "no fee".
 
+**Item icons and French item names** (2026-10-31): `npm run item-data`
+(`scripts/fetch-item-data.mjs`) reads gamers4.life's item list page in English and in French
+(robots.txt allows all agents; `/aion-2/` is not disallowed). The page embeds every item with its
+game id, name, icon path and Global flag; Taiwan-only items are skipped. Output:
+- `src/data/itemNamesFr.json` (committed): normalized English name -> French name (8,051).
+- `src/data/itemIcons.json` (committed): normalized English name -> icon file (6,385 items).
+- `public/icons/` (**git-ignored**): the icon files, downloaded once from
+  `https://gamers4.life/aion-2/database/icons/assets/Game/UI/Resource/Texture/Item/<file>.webp`
+  (2,360 files, about 41 MB; 116 were not found). Icons are game art: bundled into the user's own
+  build, never published in the repository. The app makes no request for them at run time.
+English names stay the key for prices, recipes and icons; French is display and search only.
+
 ## Rules
 
 - KR/TW data may be imported, but is stored with its own region and never

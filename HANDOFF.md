@@ -136,7 +136,10 @@ Details, known and unknown terms: `docs/DATA_SOURCES.md`.
   per request. **AI assistants must never fetch the site** (robots.txt disallows AI agents); the
   user saves responses as fixtures.
 - **gamers4.life crafting graph** (user-authorized as community data): profession recipes, read
-  from a file the user saved; the app makes no request to gamers4.life.
+  from a file the user saved.
+- **gamers4.life item list** (robots.txt allows all agents): French item names and item icons via
+  `npm run item-data`. Icons go to git-ignored `public/icons/` (game art, never published); run
+  the script before building on a new machine, or items show letter tiles.
 - Other recipe sites: references only. KR/TW data must stay in its own labelled space.
 
 ## Next tasks, in priority order

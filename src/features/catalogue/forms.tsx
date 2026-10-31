@@ -13,6 +13,7 @@ import {
 } from "../../domain/validation/catalogue";
 import { renameItem, upsertItem, upsertRecipe, type ItemRowDb, type RecipeRowDb } from "../../services/catalogueStatements";
 import { writeTransaction, type SourceRow } from "../../services/catalogue";
+import { tr } from "../../i18n";
 
 export interface Lists {
   categories: string[];
@@ -44,7 +45,7 @@ function SourceFields({ f, setF, bind, sources }: ReturnType<typeof useForm> & {
   const existing = sources.find((s) => s.name === f.source_name);
   return (
     <div className="grid grid-cols-3 gap-3">
-      <Field label="Source *" hint={existing ? "Existing source" : "New source: it will be created"}>
+      <Field label={tr("Source *")} hint={existing ? "Existing source" : "New source: it will be created"}>
         <input
           list="sources"
           {...bind("source_name")}
@@ -55,14 +56,14 @@ function SourceFields({ f, setF, bind, sources }: ReturnType<typeof useForm> & {
         />
         <datalist id="sources">{sources.map((s) => <option key={s.name} value={s.name} />)}</datalist>
       </Field>
-      <Field label="Source type *">
+      <Field label={tr("Source type *")}>
         <select {...bind("source_type")} disabled={!!existing}>
           <option value="">-</option>
           <Options values={SourceType.options} />
         </select>
       </Field>
-      <Field label="Source URL">
-        <input {...bind("source_url")} disabled={!!existing} placeholder="https://..." />
+      <Field label={tr("Source URL")}>
+        <input {...bind("source_url")} disabled={!!existing} placeholder={tr("https://...")} />
       </Field>
     </div>
   );
@@ -74,8 +75,8 @@ function Footer({ errors, busy, onClose, onSave, children }: { errors: ImportErr
       <ErrorList errors={errors} />
       <div className="flex justify-end gap-2">
         {children}
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="primary" onClick={onSave} disabled={busy}>{busy ? "Saving..." : "Save"}</Button>
+        <Button onClick={onClose}>{tr("Cancel")}</Button>
+        <Button variant="primary" onClick={onSave} disabled={busy}>{busy ? tr("Saving...") : tr("Save")}</Button>
       </div>
     </div>
   );
@@ -114,19 +115,19 @@ export function ItemForm({ existing, snapshot, lists, onSaved, onClose }: {
     <Modal title={existing ? `Edit item: ${existing.name}` : "New item"} onClose={onClose}>
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
-          <Field label="Name *"><input {...bind("name")} autoFocus /></Field>
-          <Field label="Region *" hint={existing ? "Region cannot change: create a new item instead" : undefined}>
+          <Field label={tr("Name *")}><input {...bind("name")} autoFocus /></Field>
+          <Field label={tr("Region *")} hint={existing ? "Region cannot change: create a new item instead" : undefined}>
             <select {...bind("game_region")} disabled={!!existing}><Options values={GameRegion.options} /></select>
           </Field>
-          <Field label="Verification *"><select {...bind("verification_status")}><Options values={VerificationStatus.options} /></select></Field>
-          <Field label="Category">
+          <Field label={tr("Verification *")}><select {...bind("verification_status")}><Options values={VerificationStatus.options} /></select></Field>
+          <Field label={tr("Category")}>
             <input list="categories" {...bind("category")} />
             <datalist id="categories">{lists.categories.map((c) => <option key={c} value={c} />)}</datalist>
           </Field>
-          <Field label="Game version"><input {...bind("game_version")} /></Field>
-          <Field label="Verified on"><input type="date" {...bind("last_verified_at")} /></Field>
+          <Field label={tr("Game version")}><input {...bind("game_version")} /></Field>
+          <Field label={tr("Verified on")}><input type="date" {...bind("last_verified_at")} /></Field>
         </div>
-        <Field label="Description"><textarea rows={2} {...bind("description")} /></Field>
+        <Field label={tr("Description")}><textarea rows={2} {...bind("description")} /></Field>
         <SourceFields {...form} sources={lists.sources} />
       </div>
       <Footer errors={errors} busy={busy} onClose={onClose} onSave={save} />
@@ -198,36 +199,36 @@ export function RecipeForm({ output, existing, snapshot, lists, onSaved, onClose
     <Modal title={existing ? `Edit recipe: ${existing.recipe_key}` : `New recipe for ${output.name}`} onClose={onClose}>
       <div className="space-y-4">
         <div className="grid grid-cols-4 gap-3">
-          <Field label="Recipe key *" hint="Stable id used by CSV re-imports"><input {...bind("recipe_key")} disabled={!!existing} /></Field>
-          <Field label="Output per craft *"><input inputMode="numeric" {...bind("output_quantity")} /></Field>
-          <Field label="Craft fee" hint="Empty = unknown (not zero)"><input inputMode="numeric" {...bind("craft_fee")} /></Field>
-          <Field label="Verification *"><select {...bind("verification_status")}><Options values={VerificationStatus.options} /></select></Field>
-          <Field label="Profession">
+          <Field label={tr("Recipe key *")} hint={tr("Stable id used by CSV re-imports")}><input {...bind("recipe_key")} disabled={!!existing} /></Field>
+          <Field label={tr("Output per craft *")}><input inputMode="numeric" {...bind("output_quantity")} /></Field>
+          <Field label={tr("Craft fee")} hint={tr("Empty = unknown (not zero)")}><input inputMode="numeric" {...bind("craft_fee")} /></Field>
+          <Field label={tr("Verification *")}><select {...bind("verification_status")}><Options values={VerificationStatus.options} /></select></Field>
+          <Field label={tr("Profession")}>
             <input list="professions" {...bind("profession")} />
             <datalist id="professions">{lists.professions.map((p) => <option key={p} value={p} />)}</datalist>
           </Field>
-          <Field label="Required level"><input inputMode="numeric" {...bind("required_level")} /></Field>
-          <Field label="Game version"><input {...bind("game_version")} /></Field>
-          <Field label="Verified on"><input type="date" {...bind("last_verified_at")} /></Field>
+          <Field label={tr("Required level")}><input inputMode="numeric" {...bind("required_level")} /></Field>
+          <Field label={tr("Game version")}><input {...bind("game_version")} /></Field>
+          <Field label={tr("Verified on")}><input type="date" {...bind("last_verified_at")} /></Field>
         </div>
 
         <fieldset className="rounded border border-night-700 p-3">
-          <legend className="px-1 text-xs text-slate-400">Ingredients * (items from region {region} only)</legend>
+          <legend className="px-1 text-xs text-slate-400">{tr("Ingredients * (items from region")} {region} {tr("only)")}</legend>
           <datalist id="ingredient-items">{choices.map((i) => <option key={i.name} value={i.name} />)}</datalist>
           <div className="space-y-2">
             {ingredients.map((ing, n) => (
               <div key={n} className="grid grid-cols-[1fr_7rem_auto] gap-2">
-                <input aria-label={`Ingredient ${n + 1} item`} list="ingredient-items" className={inputCls} value={ing.item} onChange={(e) => setIng(n, "item", e.target.value)} placeholder="Item name" />
+                <input aria-label={`Ingredient ${n + 1} item`} list="ingredient-items" className={inputCls} value={ing.item} onChange={(e) => setIng(n, "item", e.target.value)} placeholder={tr("Item name")} />
                 <input aria-label={`Ingredient ${n + 1} quantity`} inputMode="numeric" className={inputCls} value={ing.quantity} onChange={(e) => setIng(n, "quantity", e.target.value)} />
-                <Button variant="danger" aria-label={`Remove ingredient ${n + 1}`} disabled={ingredients.length === 1} onClick={() => setIngredients((p) => p.filter((_, i) => i !== n))}>Remove</Button>
+                <Button variant="danger" aria-label={`Remove ingredient ${n + 1}`} disabled={ingredients.length === 1} onClick={() => setIngredients((p) => p.filter((_, i) => i !== n))}>{tr("Remove")}</Button>
               </div>
             ))}
           </div>
-          <Button className="mt-2" onClick={() => setIngredients((p) => [...p, { item: "", quantity: "1" }])}>+ Add ingredient</Button>
-          {choices.length === 0 && <p className="mt-2 text-xs text-stale">No other {region} item exists yet. Create the ingredient items first.</p>}
+          <Button className="mt-2" onClick={() => setIngredients((p) => [...p, { item: "", quantity: "1" }])}>{tr("+ Add ingredient")}</Button>
+          {choices.length === 0 && <p className="mt-2 text-xs text-stale">{tr("No other")} {region} {tr("item exists yet. Create the ingredient items first.")}</p>}
         </fieldset>
 
-        <Field label="Notes"><textarea rows={2} {...bind("notes")} /></Field>
+        <Field label={tr("Notes")}><textarea rows={2} {...bind("notes")} /></Field>
         <SourceFields {...form} sources={lists.sources} />
       </div>
       <Footer errors={errors} busy={busy} onClose={onClose} onSave={save} />

@@ -130,8 +130,13 @@ it("opt-in: listed items missing from the catalogue are added (community) and pr
   expect(db.prepare("SELECT game_region, verification_status FROM items WHERE name = ?").all(NEW)).toMatchObject([{ game_region: "GLOBAL", verification_status: "community" }]);
   await waitFor(() => row(NEW) && lowestListingCell(NEW).textContent!.startsWith("99"), "new item priced");
   const search = container.querySelector<HTMLInputElement>('input[aria-label="Search items"]')!;
-  const options = [...document.getElementById(search.getAttribute("list")!)!.querySelectorAll("option")].map((o) => o.value);
-  expect(options).toContain(NEW);
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(search, "not in cat");
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  expect(search.getAttribute("aria-expanded")).toBe("true");
+  const options = [...document.getElementById(search.getAttribute("aria-controls")!)!.querySelectorAll('[role="option"]')].map((o) => o.textContent);
+  expect(options.some((t) => t!.includes(NEW))).toBe(true);
   expect(mock.fetchPrices).toHaveBeenCalledTimes(1); // mocks are cleared between tests
   expect(networkCalls).toEqual([]);
 }, 15_000);

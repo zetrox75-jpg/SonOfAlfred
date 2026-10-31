@@ -1,8 +1,11 @@
 import { getDashboardStats, type DashboardStats } from "../../services/db";
+import { ItemName } from "../../components/item";
 import { Card, EmptyState, ErrorBox, Loading, PageHeader, useAsync } from "../../components/ui";
 import { scanProfits } from "../../domain/calculations/scanner";
 import type { Workspace } from "../../services/plan";
 import { pct, useMoney, useWorkspace, WithWorkspace } from "../crafting/workspace";
+import { tr } from "../../i18n";
+
 
 function Kpi({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
@@ -16,9 +19,9 @@ function Kpi({ label, value, hint }: { label: string; value: string | number; hi
 
 function alerts(s: DashboardStats): string[] {
   const out: string[] = [];
-  if (s.recipes > 0 && s.reliableGlobalRecipes === 0) out.push("No Global recipe is verified or community-sourced yet: no result can be marked reliable.");
-  if (s.nonGlobalRecipes > 0) out.push(`${s.nonGlobalRecipes} recipe(s) come from a non-Global region (KR/TW/other). They are excluded from reliable analyses.`);
-  if (s.recipes > 0 && s.priceObservations === 0) out.push("No market price recorded: costs and profits cannot be computed.");
+  if (s.recipes > 0 && s.reliableGlobalRecipes === 0) out.push(tr("No Global recipe is verified or community-sourced yet: no result can be marked reliable."));
+  if (s.nonGlobalRecipes > 0) out.push(tr("{n} recipe(s) come from a non-Global region (KR/TW/other). They are excluded from reliable analyses.", { n: s.nonGlobalRecipes }));
+  if (s.recipes > 0 && s.priceObservations === 0) out.push(tr("No market price recorded: costs and profits cannot be computed."));
   return out;
 }
 
@@ -26,17 +29,17 @@ export default function DashboardPage() {
   const q = useAsync(getDashboardStats);
   return (
     <>
-      <PageHeader title="Dashboard" subtitle="Computed from your local database only. No figure here is estimated or invented." />
+      <PageHeader title={tr("Dashboard")} subtitle={tr("Computed from your local database only. No figure here is estimated or invented.")} />
       {q.state === "loading" && <Loading />}
       {q.state === "error" && <ErrorBox error={q.error} />}
       {q.state === "ok" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-            <Kpi label="Recipes" value={q.data.recipes} hint="Active (not archived)" />
-            <Kpi label="Reliable Global" value={q.data.reliableGlobalRecipes} hint="Status verified or community, region Global" />
-            <Kpi label="Items with a price" value={q.data.pricedItems} hint={`${q.data.priceObservations} observation(s)`} />
+            <Kpi label={tr("Recipes")} value={q.data.recipes} hint={tr("Active (not archived)")} />
+            <Kpi label={tr("Reliable Global")} value={q.data.reliableGlobalRecipes} hint={tr("Status verified or community, region Global")} />
+            <Kpi label={tr("Items with a price")} value={q.data.pricedItems} hint={`${q.data.priceObservations} observation(s)`} />
             <Kpi
-              label="Last price update"
+              label={tr("Last price update")}
               value={q.data.lastPriceAt ? new Date(q.data.lastPriceAt).toLocaleDateString() : "None"}
               hint={q.data.lastPriceAt ? new Date(q.data.lastPriceAt).toLocaleTimeString() : "No observation yet"}
             />
@@ -45,7 +48,7 @@ export default function DashboardPage() {
           <WithWorkspace>{(data) => <Opportunities data={data} />}</WithWorkspace>
 
           {alerts(q.data).length > 0 && (
-            <Card title="Alerts">
+            <Card title={tr("Alerts")}>
               <ul className="space-y-2 text-sm text-stale">
                 {alerts(q.data).map((a) => (
                   <li key={a}>• {a}</li>
@@ -55,9 +58,8 @@ export default function DashboardPage() {
           )}
 
           {q.data.recipes === 0 && (
-            <EmptyState title="Your catalogue is empty">
-              The application ships with no AION 2 recipe on purpose: no recipe, quantity or price is invented. Recipes
-              will come from CSV/JSON import with a source and a verification status (Import / Export, build step 2).
+            <EmptyState title={tr("Your catalogue is empty")}>
+              {tr("The application ships with no AION 2 recipe on purpose: no recipe, quantity or price is invented. Recipes will come from CSV/JSON import with a source and a verification status (Import / Export, build step 2).")}
             </EmptyState>
           )}
         </div>
@@ -87,12 +89,12 @@ function Opportunities({ data }: { data: Workspace }) {
   return (
     <Card title={`Profitable crafts · ${data.market ? data.market.name : "no market selected"}`}>
       <p className="num text-3xl font-semibold text-profit">{reliable.length}</p>
-      <p className="text-xs text-slate-500">reliable and profitable at quantity 1 · {unreliable} with stale or unverified data · {incomplete} incomplete</p>
+      <p className="text-xs text-slate-500">{tr("reliable and profitable at quantity 1 ·")} {unreliable} {tr("with stale or unverified data ·")} {incomplete} {tr("incomplete")}</p>
       {reliable.length > 0 && (
         <ol className="mt-3 space-y-1 text-sm">
           {reliable.slice(0, 5).map((r) => (
             <li key={r.itemId} className="flex justify-between gap-3">
-              <span>{data.items.get(r.itemId)!.name}</span>
+              <ItemName name={data.items.get(r.itemId)!.name} />
               <span className="num text-profit">{money(r.profit)} · {pct(r.marginPercent)}</span>
             </li>
           ))}

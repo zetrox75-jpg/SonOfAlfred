@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { ItemPicker } from "../../components/item";
 import { Button, ErrorBox, inputCls, Loading, useAsync } from "../../components/ui";
 import { buildCraftPlan, PlanError, verifiedOnly, type CraftPlan, type Strategy, type Valuation } from "../../domain/calculations/craftPlan";
 import { loadWorkspace, type Workspace } from "../../services/plan";
 import { addManualPrice, PRICE_KIND_LABEL, saveSettings, type ResolvedPrice } from "../../services/planQueries";
 import { writeTransaction } from "../../services/catalogue";
+import { tr } from "../../i18n";
 
 // Shared state for Calculator, Crafting tree and Inventory: one data load, one set
 // of plan choices, so nothing is typed twice.
@@ -108,55 +110,54 @@ export function PlanControls({ data }: { data: Workspace }) {
   const { choices, setChoices, write } = useWorkspace();
   const [err, setErr] = useState<string | null>(null);
   const craftable = [...data.items.values()].filter((i) => data.recipesByOutput.has(i.id));
+  const [targetText, setTargetText] = useState(choices.targetItemId === null ? "" : data.items.get(choices.targetItemId)?.name ?? "");
   const set = <K extends keyof PlanChoices>(k: K, v: PlanChoices[K]) => setChoices((c) => ({ ...c, [k]: v }));
 
   return (
     <div className="mb-5 space-y-2">
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border border-night-700 bg-night-900 p-3">
+      <div className="flex flex-wrap items-end gap-3 panel rounded-lg p-3">
+        <div className="text-xs text-slate-400">
+          {tr("Item to craft")}
+          <ItemPicker label={tr("Item to craft")} placeholder={tr("Choose a craftable item...")} className="mt-1 min-w-72" items={craftable} value={targetText}
+            onChange={setTargetText}
+            onPick={(i) => setChoices((c) => ({ ...c, targetItemId: i.id, strategies: new Map(), recipeChoice: new Map() }))} />
+        </div>
         <label className="text-xs text-slate-400">
-          Item to craft
-          <select aria-label="Item to craft" className={`${sel} mt-1 block min-w-64`} value={choices.targetItemId ?? ""}
-            onChange={(e) => setChoices((c) => ({ ...c, targetItemId: e.target.value ? Number(e.target.value) : null, strategies: new Map(), recipeChoice: new Map() }))}>
-            <option value="">Choose a craftable item...</option>
-            {craftable.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.game_region})</option>)}
-          </select>
-        </label>
-        <label className="text-xs text-slate-400">
-          Quantity
-          <input aria-label="Quantity" inputMode="numeric" className={`${inputCls} mt-1 w-24`} value={choices.quantity}
+          {tr("Quantity")}
+          <input aria-label={tr("Quantity")} inputMode="numeric" className={`${inputCls} mt-1 w-24`} value={choices.quantity}
             onChange={(e) => /^\d{0,7}$/.test(e.target.value) && set("quantity", Number(e.target.value) || 1)} />
         </label>
         <label className="text-xs text-slate-400">
-          Market (prices)
-          <select aria-label="Market" className={`${sel} mt-1 block min-w-48`} value={data.market?.id ?? ""}
+          {tr("Market (prices)")}
+          <select aria-label={tr("Market")} className={`${sel} mt-1 block min-w-48`} value={data.market?.id ?? ""}
             onChange={async (e) => {
               setErr(null);
               try { await write(saveSettings({ activeMarketId: e.target.value ? Number(e.target.value) : null })); } catch (x) { setErr(String(x)); }
             }}>
-            <option value="">No market selected</option>
+            <option value="">{tr("No market selected")}</option>
             {data.markets.map((m) => <option key={m.id} value={m.id}>{[m.name, m.region, m.server, m.faction].filter(Boolean).join(" · ")}</option>)}
           </select>
         </label>
         <fieldset className="text-xs text-slate-400">
-          <legend>Stock valuation</legend>
+          <legend>{tr("Stock valuation")}</legend>
           <div className="mt-1 flex overflow-hidden rounded border border-night-600">
             {(["cash", "economic"] as const).map((v) => (
               <button key={v} type="button" aria-pressed={choices.valuation === v} onClick={() => set("valuation", v)}
                 title={v === "cash" ? "Owned materials cost nothing extra" : "Owned materials are valued at their market buy price"}
                 className={`px-3 py-1.5 text-sm ${choices.valuation === v ? "bg-gold-400 font-semibold text-night-950" : "text-slate-300 hover:bg-night-700"}`}>
-                {v === "cash" ? "Cash cost" : "Economic cost"}
+                {v === "cash" ? tr("Cash cost") : tr("Economic cost")}
               </button>
             ))}
           </div>
         </fieldset>
         <label className="flex items-center gap-2 pb-2 text-sm text-slate-300">
-          <input type="checkbox" checked={choices.useInventory} onChange={(e) => set("useInventory", e.target.checked)} /> Use my inventory
+          <input type="checkbox" checked={choices.useInventory} onChange={(e) => set("useInventory", e.target.checked)} /> {tr("Use my inventory")}
         </label>
-        <label className="flex items-center gap-2 pb-2 text-sm text-slate-300" title="Community recipes count as reliable by default">
-          <input type="checkbox" checked={choices.verifiedOnly} onChange={(e) => set("verifiedOnly", e.target.checked)} /> Verified Global recipes only
+        <label className="flex items-center gap-2 pb-2 text-sm text-slate-300" title={tr("Community recipes count as reliable by default")}>
+          <input type="checkbox" checked={choices.verifiedOnly} onChange={(e) => set("verifiedOnly", e.target.checked)} /> {tr("Verified Global recipes only")}
         </label>
       </div>
-      {!data.market && <p className="text-sm text-stale">No market selected: every price is missing. Create a market in Settings, then pick it here.</p>}
+      {!data.market && <p className="text-sm text-stale">{tr("No market selected: every price is missing. Create a market in Settings, then pick it here.")}</p>}
       {err && <p className="text-sm text-loss">{err}</p>}
     </div>
   );
@@ -190,10 +191,10 @@ export function PriceCell({ itemId, role, point }: { itemId: number; role: "buy"
   if (edit !== null)
     return (
       <span className="inline-flex items-center gap-1">
-        <input autoFocus aria-label="New price" inputMode="numeric" className={`${inputCls} w-28 py-0.5`} value={edit}
+        <input autoFocus aria-label={tr("New price")} inputMode="numeric" className={`${inputCls} w-28 py-0.5`} value={edit}
           onChange={(e) => setEdit(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEdit(null); }} />
-        <Button className="px-2 py-0.5" variant="primary" onClick={save}>Save</Button>
-        <span className="text-[11px] text-slate-500">as {PRICE_KIND_LABEL[kind]}</span>
+        <Button className="px-2 py-0.5" variant="primary" onClick={save}>{tr("Save")}</Button>
+        <span className="text-[11px] text-slate-500">{tr("as")} {PRICE_KIND_LABEL[kind]}</span>
         {err && <span className="text-xs text-loss">{err}</span>}
       </span>
     );
@@ -201,7 +202,7 @@ export function PriceCell({ itemId, role, point }: { itemId: number; role: "buy"
     <button type="button" disabled={!market} onClick={() => setEdit(point ? String(point.unitPrice) : "")}
       title={market ? `Click to enter a new ${PRICE_KIND_LABEL[kind]} (kept in history)` : "Select a market first"}
       className="group text-right disabled:cursor-not-allowed">
-      {point ? <PriceLabel point={point} money={money} /> : <span className="text-missing group-hover:underline">missing · set</span>}
+      {point ? <PriceLabel point={point} money={money} /> : <span className="text-missing group-hover:underline">{tr("missing · set")}</span>}
     </button>
   );
 }
@@ -212,7 +213,7 @@ export function PriceLabel({ point, money }: { point: ResolvedPrice; money: Retu
       <span className="num text-slate-100 group-hover:underline">{money(point.unitPrice)}</span>
       <span className={`block text-[11px] ${point.stale ? "text-stale" : "text-slate-500"}`}
         title={`Observed ${new Date(point.observedAt).toLocaleString()} · retrieved ${new Date(point.retrievedAt).toLocaleString()}`}>
-        {point.stale && "stale · "}{point.override && "override · "}{PRICE_KIND_LABEL[point.kind]} · {point.source} · {ago(point.observedAt)}
+        {point.stale && tr("stale · ")}{point.override && tr("override · ")}{PRICE_KIND_LABEL[point.kind]} · {point.source} · {ago(point.observedAt)}
       </span>
     </>
   );

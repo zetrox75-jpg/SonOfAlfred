@@ -5,6 +5,7 @@ import { PROVIDER, canRefresh, type ProviderServer } from "../../services/market
 import { AION2EXCHANGE, createMarketForServer, fetchServers, importCrafts, loadHistory, loadStatus, refreshMarket, setEnabled } from "../../services/market/refresh";
 import { providerById } from "../../services/market/provider";
 import { useWorkspace } from "../crafting/workspace";
+import { tr } from "../../i18n";
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "never");
 
@@ -18,37 +19,37 @@ export function ProviderSettingsCard() {
     try { await setEnabled(on); setAck(false); q.reload(); } catch (e) { setErr(String(e)); }
   };
   return (
-    <Card title="Automatic prices: aion2.exchange">
+    <Card title={tr("Automatic prices: aion2.exchange")}>
       {q.state === "loading" && <Loading />}
       {q.state === "error" && <ErrorBox error={q.error} />}
       {q.state === "ok" && (
         <div className="space-y-3 text-sm">
           <div className="rounded border border-stale/40 bg-stale/10 p-3 text-stale">
-            <p className="font-semibold">Unofficial community source, enabled by default (user-authorized 2026-10-31).</p>
+            <p className="font-semibold">{tr("Unofficial community source, enabled by default (user-authorized 2026-10-31).")}</p>
             <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs">
-              <li>aion2.exchange is a community service, not NCSOFT. It publishes no terms of use (checked 2026-10-31).</li>
-              <li>Its robots.txt allows general clients but sets <code>use=reference</code>, whose meaning is not defined. You authorized its use as a public, keyless, read-only API (README rule 6, relaxed 2026-10-31). Disable it here at any time.</li>
-              <li>Prices are the <strong>cheapest active listings</strong> per server, never completed sales.</li>
-              <li>When enabled, the app sends only GET requests to {PROVIDER.base}/servers, /items and /items/&#123;id&#125;/prices, only when you press a button, at most once per hour per request, identifying itself as “{PROVIDER.userAgent}”.</li>
+              <li>{tr("aion2.exchange is a community service, not NCSOFT. It publishes no terms of use (checked 2026-10-31).")}</li>
+              <li>{tr("Its robots.txt allows general clients but sets")} <code>{tr("use=reference")}</code>{tr(", whose meaning is not defined. You authorized its use as a public, keyless, read-only API (README rule 6, relaxed 2026-10-31). Disable it here at any time.")}</li>
+              <li>{tr("Prices are the")} <strong>{tr("cheapest active listings")}</strong> {tr("per server, never completed sales.")}</li>
+              <li>{tr("When enabled, the app sends only GET requests to")} {PROVIDER.base}{tr("/servers, /items and /items/{id}/prices, only when you press a button, at most once per hour per request, identifying itself as “")}{PROVIDER.userAgent}”.</li>
             </ul>
             <a className="mt-1 inline-block text-xs underline" href={PROVIDER.homepage} target="_blank" rel="noreferrer">{PROVIDER.homepage}</a>
           </div>
-          <p>Status: {q.data.enabled ? <strong className="text-profit">enabled</strong> : <strong className="text-slate-300">disabled</strong>}
-            {q.data.enabled && q.data.acknowledgedAt && <span className="text-slate-500"> · enabled on {when(q.data.acknowledgedAt)}</span>}</p>
+          <p>{tr("Status:")} {q.data.enabled ? <strong className="text-profit">{tr("enabled")}</strong> : <strong className="text-slate-300">{tr("disabled")}</strong>}
+            {q.data.enabled && q.data.acknowledgedAt && <span className="text-slate-500"> {tr("· enabled on")} {when(q.data.acknowledgedAt)}</span>}</p>
           <dl className="grid grid-cols-[9rem_1fr] gap-y-0.5 text-xs">
-            <dt className="text-slate-500">Last attempt</dt><dd>{when(q.data.lastAttemptAt)}</dd>
-            <dt className="text-slate-500">Last success</dt><dd>{when(q.data.lastSuccessAt)}{q.data.lastResult && <span className="text-slate-400"> · {q.data.lastResult}</span>}</dd>
-            <dt className="text-slate-500">Last error</dt><dd className={q.data.lastError ? "text-loss" : ""}>{q.data.lastError ?? "none"}</dd>
+            <dt className="text-slate-500">{tr("Last attempt")}</dt><dd>{when(q.data.lastAttemptAt)}</dd>
+            <dt className="text-slate-500">{tr("Last success")}</dt><dd>{when(q.data.lastSuccessAt)}{q.data.lastResult && <span className="text-slate-400"> · {q.data.lastResult}</span>}</dd>
+            <dt className="text-slate-500">{tr("Last error")}</dt><dd className={q.data.lastError ? "text-loss" : ""}>{q.data.lastError ?? tr("none")}</dd>
           </dl>
           {q.data.enabled ? (
-            <div className="flex justify-end"><Button onClick={() => toggle(false)}>Disable</Button></div>
+            <div className="flex justify-end"><Button onClick={() => toggle(false)}>{tr("Disable")}</Button></div>
           ) : (
             <div className="flex flex-wrap items-center justify-end gap-3">
               <label className="mr-auto flex items-center gap-2 text-xs text-slate-300">
                 <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />
-                I have read this notice.
+                {tr("I have read this notice.")}
               </label>
-              <Button variant="primary" disabled={!ack} onClick={() => toggle(true)}>Enable</Button>
+              <Button variant="primary" disabled={!ack} onClick={() => toggle(true)}>{tr("Enable")}</Button>
             </div>
           )}
           {err && <p className="text-loss">{err}</p>}
@@ -85,7 +86,7 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
     }
   };
 
-  if (q.state !== "ok") return <Card title="Automatic prices">{q.state === "error" ? <ErrorBox error={q.error} /> : <Loading />}</Card>;
+  if (q.state !== "ok") return <Card title={tr("Automatic prices")}>{q.state === "error" ? <ErrorBox error={q.error} /> : <Loading />}</Card>;
   const s = q.data;
   const market = data.market;
   const linked = new Set(data.markets.map((m) => m.provider_server).filter(Boolean));
@@ -96,38 +97,38 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
   return (
     <Card title={`Automatic prices: ${source?.name ?? providerId}${source?.sourceType === "official" ? "" : " (unofficial)"}`}>
       {!s.enabled ? (
-        <p className="text-sm text-slate-400">Disabled in Settings. Enable it there to refresh prices. Manual entry and CSV import keep working without it.</p>
+        <p className="text-sm text-slate-400">{tr("Disabled in Settings. Enable it there to refresh prices. Manual entry and CSV import keep working without it.")}</p>
       ) : (
         <div className="space-y-3 text-sm">
           {market?.provider_server ? (
             <div className="flex flex-wrap items-center gap-3">
-              <span>“{market.name}” receives the cheapest listings of server <strong>{market.server}</strong> ({market.faction}).</span>
+              <span>“{market.name}{tr("” receives the cheapest listings of server")} <strong>{market.server}</strong> ({market.faction}).</span>
               <Button variant="primary" disabled={busy || (next !== null && !next.allowed)}
                 onClick={() => run(() => refreshMarket({ id: market.id, name: market.name, provider_server: market.provider_server }, { addMissing }))}>
-                {busy ? "Refreshing..." : "Refresh prices"}
+                {busy ? tr("Refreshing...") : tr("Refresh prices")}
               </Button>
-              <label className="flex items-center gap-1.5 text-xs text-slate-400" title="Creates Global items with status community (not verified), source and date recorded. Recipes are never created.">
-                <input type="checkbox" checked={addMissing} onChange={(e) => setAddMissing(e.target.checked)} /> Also add listed items missing from my catalogue
+              <label className="flex items-center gap-1.5 text-xs text-slate-400" title={tr("Creates Global items with status community (not verified), source and date recorded. Recipes are never created.")}>
+                <input type="checkbox" checked={addMissing} onChange={(e) => setAddMissing(e.target.checked)} /> {tr("Also add listed items missing from my catalogue")}
               </label>
-              {next && !next.allowed && <span className="text-xs text-slate-500">cached; next refresh after {new Date(next.nextAt).toLocaleTimeString()}</span>}
+              {next && !next.allowed && <span className="text-xs text-slate-500">{tr("cached; next refresh after")} {new Date(next.nextAt).toLocaleTimeString()}</span>}
               {providerId === AION2EXCHANGE && (
                 <Button disabled={busy || (craftsNext !== null && !craftsNext.allowed)} onClick={() => run(() => importCrafts(market))}
-                  title="Splendent craft recipes of this server's race, from the aion2.exchange crafts model: Global, community, expected quantities rounded up, craft fee unknown.">
-                  Import Splendent crafts
+                  title={tr("Splendent craft recipes of this server's race, from the aion2.exchange crafts model: Global, community, expected quantities rounded up, craft fee unknown.")}>
+                  {tr("Import Splendent crafts")}
                 </Button>
               )}
             </div>
           ) : (
-            <p className="text-slate-400">{market ? `“${market.name}” is not linked to a server: it only holds manual and imported prices.` : "No market selected."}</p>
+            <p className="text-slate-400">{market ? `“${market.name}” is not linked to a server: it only holds manual and imported prices.` : tr("No market selected.")}</p>
           )}
           <div className="flex flex-wrap items-center gap-2 border-t border-night-700 pt-3">
-            <span className="text-xs text-slate-500">New market bound to one server (region, server and faction come from the API):</span>
+            <span className="text-xs text-slate-500">{tr("New market bound to one server (region, server and faction come from the API):")}</span>
             {servers ? (
               <>
-                <select aria-label="Server" className="rounded border border-night-600 bg-night-950 px-2 py-1 text-sm" value={pick} onChange={(e) => setPick(e.target.value)}>
-                  <option value="">Choose a server...</option>
+                <select aria-label={tr("Server")} className="rounded border border-night-600 bg-night-950 px-2 py-1 text-sm" value={pick} onChange={(e) => setPick(e.target.value)}>
+                  <option value="">{tr("Choose a server...")}</option>
                   {servers.filter((x) => !linked.has(`aion2.exchange:${x.server_id}`)).map((x) => (
-                    <option key={x.server_id} value={x.server_id}>{x.region} · {x.name} · {x.faction}{x.has_data ? "" : " (no data)"}</option>
+                    <option key={x.server_id} value={x.server_id}>{x.region} · {x.name} · {x.faction}{x.has_data ? "" : tr(" (no data)")}</option>
                   ))}
                 </select>
                 <Button disabled={!pick || busy} onClick={() => run(async () => {
@@ -135,10 +136,10 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
                   await createMarketForServer(srv);
                   setPick("");
                   return `Market created for ${srv.name} · ${srv.faction}. Select it above, then refresh.`;
-                })}>Create market</Button>
+                })}>{tr("Create market")}</Button>
               </>
             ) : (
-              <Button disabled={busy} onClick={() => run(async () => { setServers(await fetchServers()); })}>Load server list</Button>
+              <Button disabled={busy} onClick={() => run(async () => { setServers(await fetchServers()); })}>{tr("Load server list")}</Button>
             )}
           </div>
           {msg && <p role="status" className={msg.ok ? "text-profit" : "text-loss"}>{msg.text}</p>}
@@ -161,7 +162,7 @@ export function ProviderHistoryButton({ data, itemId, onLoaded }: { data: Worksp
         setBusy(true);
         setMsg(null);
         try { setMsg({ ok: true, text: await loadHistory(market, itemId) }); onLoaded(); } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : String(e) }); } finally { setBusy(false); q.reload(); }
-      }}>{busy ? "Loading..." : "Load 7-day history from aion2.exchange"}</Button>
+      }}>{busy ? tr("Loading...") : tr("Load 7-day history from aion2.exchange")}</Button>
       {msg && <span role="status" className={msg.ok ? "text-profit" : "text-loss"}>{msg.text}</span>}
     </div>
   );

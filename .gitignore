@@ -25,3 +25,6 @@ dist-ssr
 
 # Generated knowledge graph (graphify)
 graphify-out
+
+# Game item icons (downloaded by `npm run icons`, game art: not published)
+public/icons

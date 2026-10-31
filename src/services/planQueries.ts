@@ -1,5 +1,6 @@
 import type { PlanRecipe, PricePoint } from "../domain/calculations/craftPlan";
 import { isReliable, PriceKind } from "../domain/models";
+import { tr } from "../i18n";
 import { isStale } from "../domain/calculations/profit";
 import type { Statement } from "./catalogueStatements";
 
@@ -49,12 +50,12 @@ export const toPlanRecipe = (r: PlanRecipeRow): PlanRecipe => ({
 /** What an observed number is. A listing is never a completed sale. */
 export const PRICE_KINDS = PriceKind.options;
 export const PRICE_KIND_LABEL: Record<PriceKind, string> = {
-  lowest_listing: "lowest active listing",
-  typical_listing: "typical listing",
-  median_listing: "median listing",
-  sale_price: "completed sale",
-  estimate: "your estimate",
-  unknown: "unknown kind",
+  lowest_listing: tr("lowest active listing"),
+  typical_listing: tr("typical listing"),
+  median_listing: tr("median listing"),
+  sale_price: tr("completed sale"),
+  estimate: tr("your estimate"),
+  unknown: tr("unknown kind"),
 };
 
 /** Where a price comes from, in fallback order (README 16.6). */

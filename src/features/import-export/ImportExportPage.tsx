@@ -26,6 +26,7 @@ import recipesTemplate from "../../../data/templates/recipes.csv?raw";
 import demoItems from "../../../data/templates/demo/demo_items.csv?raw";
 import demoRecipes from "../../../data/templates/demo/demo_recipes.csv?raw";
 import { CraftingGraph, craftingGraphStatements, GRAPH_SOURCE, type GraphImport, type Race } from "../../services/craftingGraph";
+import { tr } from "../../i18n";
 
 type Kind = "items" | "recipes" | "prices" | "inventory";
 const KIND_LABEL: Record<Kind, string> = { items: "Items", recipes: "Recipes", prices: "Prices", inventory: "Inventory" };
@@ -104,17 +105,17 @@ export default function ImportExportPage() {
 
   return (
     <>
-      <PageHeader title="Import / Export" subtitle="Imports are validated and previewed. Nothing is written until you confirm, and a write is all-or-nothing." />
+      <PageHeader title={tr("Import / Export")} subtitle={tr("Imports are validated and previewed. Nothing is written until you confirm, and a write is all-or-nothing.")} />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <Card title="Import CSV">
+        <Card title={tr("Import CSV")}>
           <ol className="mb-4 list-decimal space-y-1 pl-5 text-sm text-slate-400">
-            <li>Import <strong>items</strong> first: recipes, prices and inventory only reference existing items (name + region).</li>
-            <li>Comma or semicolon separated, UTF-8. From Excel: “Save as CSV UTF-8”. One row per ingredient for recipes.</li>
-            <li>An empty craft fee means "unknown", not zero. Prices need an existing market (Settings) and an observation date.</li>
+            <li>{tr("Import")} <strong>{tr("items")}</strong> {tr("first: recipes, prices and inventory only reference existing items (name + region).")}</li>
+            <li>{tr("Comma or semicolon separated, UTF-8. From Excel: “Save as CSV UTF-8”. One row per ingredient for recipes.")}</li>
+            <li>{tr("An empty craft fee means \"unknown\", not zero. Prices need an existing market (Settings) and an observation date.")}</li>
           </ol>
           <div className="flex flex-wrap items-center gap-4">
             <fieldset className="flex gap-4 text-sm">
-              <legend className="sr-only">File type</legend>
+              <legend className="sr-only">{tr("File type")}</legend>
               {(["items", "recipes", "prices", "inventory"] as const).map((k) => (
                 <label key={k} className="flex items-center gap-1.5">
                   <input type="radio" name="kind" checked={kind === k} onChange={() => { setKind(k); setPreview(null); setErrors([]); }} /> {KIND_LABEL[k]}
@@ -125,26 +126,26 @@ export default function ImportExportPage() {
               key={kind + String(report)}
               type="file"
               accept=".csv,text/csv"
-              aria-label="CSV file"
+              aria-label={tr("CSV file")}
               className="text-sm file:mr-3 file:rounded file:border-0 file:bg-night-700 file:px-3 file:py-1.5 file:text-slate-200"
               onChange={(e) => onFile(e.target.files?.[0])}
             />
           </div>
 
           <div className="mt-4 space-y-3">
-            {errors.length > 0 && <p className="text-sm text-loss">{errors.length} error(s). Fix the file and choose it again: nothing was written.</p>}
+            {errors.length > 0 && <p className="text-sm text-loss">{errors.length} {tr("error(s). Fix the file and choose it again: nothing was written.")}</p>}
             <ErrorList errors={errors} />
             {report && <p role="status" className="rounded border border-profit/40 bg-profit/10 p-3 text-sm text-profit">{report}</p>}
             {preview && counts && (
               <>
                 <p className="text-sm">
-                  Preview of <strong>{preview.file}</strong>:{" "}
+                  {tr("Preview of")} <strong>{preview.file}</strong>:{" "}
                   {counts.map(([a, n]) => <span key={a} className={`mr-3 ${ACTION_STYLE[a]}`}>{n} {a}</span>)}
                 </p>
                 <div className="max-h-80 overflow-y-auto rounded border border-night-700">
                   <table className="w-full text-sm">
                     <thead className="sticky top-0 bg-night-800 text-left text-xs uppercase text-slate-400">
-                      <tr><th className="px-3 py-1.5">Action</th>{preview.headers.map((h) => <th key={h} className="px-3 py-1.5">{h}</th>)}</tr>
+                      <tr><th className="px-3 py-1.5">{tr("Action")}</th>{preview.headers.map((h) => <th key={h} className="px-3 py-1.5">{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {preview.rows.map((r, i) => (
@@ -157,9 +158,9 @@ export default function ImportExportPage() {
                   </table>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button onClick={() => setPreview(null)}>Cancel</Button>
+                  <Button onClick={() => setPreview(null)}>{tr("Cancel")}</Button>
                   <Button variant="primary" disabled={busy || pending === 0} onClick={confirm}>
-                    {pending === 0 ? "Nothing to write" : busy ? "Writing..." : `Write ${pending} change(s)`}
+                    {pending === 0 ? tr("Nothing to write") : busy ? tr("Writing...") : `Write ${pending} change(s)`}
                   </Button>
                 </div>
               </>
@@ -168,36 +169,36 @@ export default function ImportExportPage() {
         </Card>
 
         <div className="space-y-4">
-          <Card title="Templates">
-            <p className="mb-3 text-sm text-slate-400">Empty files with the exact columns the importer expects. Column reference: data/templates/README.md.</p>
+          <Card title={tr("Templates")}>
+            <p className="mb-3 text-sm text-slate-400">{tr("Empty files with the exact columns the importer expects. Column reference: data/templates/README.md.")}</p>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => saveFile("items_template.csv", itemsTemplate)}>items.csv</Button>
-              <Button onClick={() => saveFile("recipes_template.csv", recipesTemplate)}>recipes.csv</Button>
-              <Button onClick={() => saveFile("prices_template.csv", pricesTemplate)}>prices.csv</Button>
-              <Button onClick={() => saveFile("inventory_template.csv", inventoryTemplate)}>inventory.csv</Button>
+              <Button onClick={() => saveFile("items_template.csv", itemsTemplate)}>{tr("items.csv")}</Button>
+              <Button onClick={() => saveFile("recipes_template.csv", recipesTemplate)}>{tr("recipes.csv")}</Button>
+              <Button onClick={() => saveFile("prices_template.csv", pricesTemplate)}>{tr("prices.csv")}</Button>
+              <Button onClick={() => saveFile("inventory_template.csv", inventoryTemplate)}>{tr("inventory.csv")}</Button>
             </div>
             <p className="mb-2 mt-4 text-sm text-slate-400">
-              Fictional demo files to try the import. Region <strong>OTHER</strong>, source type <strong>demo</strong>: never treated as AION 2 data.
+              {tr("Fictional demo files to try the import. Region")} <strong>{tr("OTHER")}</strong>{tr(", source type")} <strong>{tr("demo")}</strong>{tr(": never treated as AION 2 data.")}
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => saveFile("demo_items.csv", demoItems)}>demo_items.csv</Button>
-              <Button onClick={() => saveFile("demo_recipes.csv", demoRecipes)}>demo_recipes.csv</Button>
+              <Button onClick={() => saveFile("demo_items.csv", demoItems)}>{tr("demo_items.csv")}</Button>
+              <Button onClick={() => saveFile("demo_recipes.csv", demoRecipes)}>{tr("demo_recipes.csv")}</Button>
             </div>
           </Card>
           {saved && <p role="status" className="rounded border border-profit/40 bg-profit/10 p-3 text-sm break-all text-profit">{saved}</p>}
-          <Card title="Export">
-            <p className="mb-3 text-sm text-slate-400">CSV exports use the import format, so they re-import without change. They contain active (non-archived) records only.</p>
+          <Card title={tr("Export")}>
+            <p className="mb-3 text-sm text-slate-400">{tr("CSV exports use the import format, so they re-import without change. They contain active (non-archived) records only.")}</p>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => exportCsv("items")}>Items CSV</Button>
-              <Button onClick={() => exportCsv("recipes")}>Recipes CSV</Button>
+              <Button onClick={() => exportCsv("items")}>{tr("Items CSV")}</Button>
+              <Button onClick={() => exportCsv("recipes")}>{tr("Recipes CSV")}</Button>
               <Button onClick={() => saveFile(`aion2-cpm-${new Date().toISOString().slice(0, 10)}.json`, exportAllJson)}>
-                Full JSON (all tables)
+                {tr("Full JSON (all tables)")}
               </Button>
             </div>
           </Card>
           <GraphImportCard />
-          <Card title="Not available yet">
-            <p className="text-sm text-slate-500">XLSX import (save as CSV from Excel instead), SQLite backup and restore (step 5).</p>
+          <Card title={tr("Not available yet")}>
+            <p className="text-sm text-slate-500">{tr("XLSX import (save as CSV from Excel instead), SQLite backup and restore (step 5).")}</p>
           </Card>
         </div>
       </div>
@@ -317,32 +318,30 @@ function GraphImportCard() {
   }
 
   return (
-    <Card title="Import crafting graph (gamers4.life JSON)">
+    <Card title={tr("Import crafting graph (gamers4.life JSON)")}>
       <p className="mb-3 text-sm text-slate-400">
-        Profession recipes from the file you saved from {GRAPH_SOURCE.url}. Read locally, no network. Recipes are Global with status
-        community (region not stated by the source); quantities and craft fees come from the file. Re-importing updates the same recipes
-        and keeps a craft fee you changed.
+        {tr("Profession recipes from the file you saved from")} {GRAPH_SOURCE.url}{tr(". Read locally, no network. Recipes are Global with status community (region not stated by the source); quantities and craft fees come from the file. Re-importing updates the same recipes and keeps a craft fee you changed.")}
       </p>
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <select aria-label="Race" className="rounded border border-night-600 bg-night-950 px-2 py-1" value={race}
+        <select aria-label={tr("Race")} className="rounded border border-night-600 bg-night-950 px-2 py-1" value={race}
           onChange={(e) => { setRace(e.target.value as Race | ""); setPlan(null); }}>
-          <option value="">Race of your market...</option>
-          <option value="dark">Asmodian</option>
-          <option value="light">Elyos</option>
+          <option value="">{tr("Race of your market...")}</option>
+          <option value="dark">{tr("Asmodian")}</option>
+          <option value="light">{tr("Elyos")}</option>
         </select>
-        <input key={race + String(msg?.ok)} type="file" accept=".json,application/json" aria-label="Crafting graph file" disabled={!race}
+        <input key={race + String(msg?.ok)} type="file" accept=".json,application/json" aria-label={tr("Crafting graph file")} disabled={!race}
           className="text-sm file:mr-3 file:rounded file:border-0 file:bg-night-700 file:px-3 file:py-1.5 file:text-slate-200"
           onChange={(e) => onFile(e.target.files?.[0])} />
       </div>
       {plan && (
         <div className="mt-3 space-y-2 text-sm">
           <p>
-            <strong>{plan.file}</strong>: {plan.recipes} recipe(s) to write; {plan.noInputs} without ingredients skipped;
-            {" "}{plan.mergedNames} item name(s) shared by several game variants, merged.
+            <strong>{plan.file}</strong>: {plan.recipes} {tr("recipe(s) to write;")} {plan.noInputs} {tr("without ingredients skipped;")}
+            {" "}{plan.mergedNames} {tr("item name(s) shared by several game variants, merged.")}
           </p>
           <div className="flex justify-end gap-2">
-            <Button onClick={() => setPlan(null)}>Cancel</Button>
-            <Button variant="primary" disabled={busy || plan.recipes === 0} onClick={write}>{busy ? "Writing..." : `Write ${plan.recipes} recipe(s)`}</Button>
+            <Button onClick={() => setPlan(null)}>{tr("Cancel")}</Button>
+            <Button variant="primary" disabled={busy || plan.recipes === 0} onClick={write}>{busy ? tr("Writing...") : `Write ${plan.recipes} recipe(s)`}</Button>
           </div>
         </div>
       )}
