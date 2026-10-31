@@ -55,7 +55,7 @@ export type ProviderServer = z.infer<typeof Server>;
 
 const Item = z.object({
   item_key: z.number().int().positive(),
-  name: z.string(),
+  name: z.string().nullable(), // nullable in the API's own schema (ItemSummary)
   price: z.number().nullable(),
   listings: z.number().int().nullable(),
   captured_at: z.string().nullable(),
@@ -121,7 +121,7 @@ export const serverRef = (serverId: number) => `aion2.exchange:${serverId}`;
 export function normalizeItems(res: z.output<typeof ItemsResponse>, catalogue: Map<string, number>): Normalized {
   const out: Normalized = { observations: [], unmatched: 0, skipped: 0 };
   for (const it of res.items) {
-    if (!it.listed || it.price === null || !Number.isSafeInteger(it.price) || it.price < 0 || !it.captured_at) {
+    if (!it.listed || it.name === null || it.price === null || !Number.isSafeInteger(it.price) || it.price < 0 || !it.captured_at) {
       out.skipped++;
       continue;
     }

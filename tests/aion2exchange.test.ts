@@ -75,8 +75,14 @@ describe("normalization", () => {
       { ...AMPLIFY, listed: false },
       { ...AMPLIFY, price: 10.5 },
       { ...AMPLIFY, price: null },
+      { ...AMPLIFY, name: null },
     ] }, catalogue);
-    expect(n).toMatchObject({ observations: [], skipped: 3 });
+    expect(n).toMatchObject({ observations: [], skipped: 4 });
+  });
+
+  it("accepts an item list with a nameless item (allowed by the API schema)", () => {
+    const res = parse(ItemsResponse, { ...fixture("items.json"), items: [...fixture("items.json").items, { ...fixture("items.json").items[0], item_key: 1, name: null }] }, "items");
+    expect(normalizeItems(res, catalogue).observations.length).toBe(normalizeItems(items, catalogue).observations.length);
   });
 
   it("turns history buckets into lowest_listing observations at the bucket close", () => {
