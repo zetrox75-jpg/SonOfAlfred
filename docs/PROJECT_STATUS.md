@@ -249,14 +249,36 @@ Live finding fixed in `8e2d3db`: the API schema allows `name: null` for items; o
 the whole `/api/items` response fail validation, so nothing was stored. Price labels now also show
 the retrieval time (hover: "Observed … · retrieved …", README 16.4).
 
+### Session 3 (2026-10-31): relaxed rules, community recipes
+
+The user relaxed README rules 3, 4 and 6 and sections 15.3, 16.2, 16.4 and 16.7 (commit
+`b46e7c1`). Work in commit `f14be67`:
+
+| Change | Where | Evidence |
+|--------|-------|----------|
+| aion2.exchange enabled by default, source recorded as authorized (`is_authorized = 1`, also fixed on older DBs at the next refresh) | `aion2exchange.ts` (`defaultStatus`, `SOURCE.authorized`), `provider.ts` | tests; live `.e2e` refresh: `enabled: true` without a click |
+| Provider status writes serialized (a refresh ending after Disable cannot re-enable) | `refresh.ts` (`serial`) | `tests/marketRefresh.test.tsx`: fails without the lock, passes with it |
+| `units_sold` / `sold_avg_price` kept in `raw_snapshot.community_unconfirmed`, never a sale | `aion2exchange.ts` | fixture test passes; **live refresh stored 0 rows with them (cause not found)** |
+| Global `community` data reliable by default; "Verified Global recipes only" filter on Calculator and Profit Scanner | `domain/models` (`isReliable`), `craftPlan.ts` (`verifiedOnly`), `planQueries.ts`, `workspace.tsx`, `ScannerPage.tsx`, Dashboard "Reliable Global" | `profit.test.ts`, `craftPlan.test.ts`, `planQueries.test.ts` |
+| Splendent crafts import (`/api/crafts/model`), 1 recipe per target, expected quantities rounded up, fee NULL | `aion2exchange.ts` (`craftRecipeStatements`), `refresh.ts` (`importCrafts`), Market page button | `tests/crafts.test.ts` (7); live `.e2e`: 19 Kromede recipes written |
+| gamers4.life crafting graph import from a saved file, one race at a time | `src/services/craftingGraph.ts`, Import / Export card | `tests/craftingGraph.test.ts` (7); live `.e2e`: 745 Asmodian recipes written |
+| Shared upsert for community recipes (keeps a fee the user changed) | `src/services/communityRecipes.ts` | both test files |
+
+Live run in the isolated `.e2e` app (Kromede · Asmodian (EU), server 12316), read-only checks of
+its database: 499 prices (`lowest_listing`, source + times), 19 Splendent + 745 profession
+recipes. The real scanner code on that data, quantity 1, **commission not set (0 used)**: 399
+craftable items, 52 complete, 6 profitable (top: Splendent Star Dragon Lord Necklace and Gloves,
+about +35M each before commission); 347 incomplete (no sell price 282, missing buy price 216,
+unknown fee 91; overlapping).
+
 ## Features: finished, partial, not available (README 12)
 
 | Status | Features |
 |--------|----------|
 | Finished and tested | Catalogue (search, filters, item sheet, add/edit, recipe archive); CSV import with preview and all-or-nothing write (items, recipes, prices, inventory); CSV and JSON export; calculation engine (chains, batches, stock, shared ingredients, alternatives, cycles, cash vs economic cost, profitability, break-even); calculator, crafting tree, buy-vs-craft; scanner; market prices with kinds, freshness, history chart; inventory; dashboard; demo data cleanup; backup / restore; backup before migrations; start-up and render error screens; end-to-end script |
 | Built, not fully verified | NSIS and MSI installers (**clean-install test Deferred / Not yet verified**); native error box for start failures (not triggered); native Save/Open dialogs of backup/restore (not driven by the assistant) |
-| Partial | aion2.exchange price adapter: default provider, enabled by default (user-authorized 2026-10-31); end-to-end validation with the user pending (MT-1); no pagination beyond 1000 items |
-| Not available | AION 2 Global recipe/item/price data (none verified, nothing shipped); XLSX import; edit/delete of markets and sources; item archiving; nested categories; item icons; code signing; auto-update |
+| Partial | aion2.exchange price adapter: default provider, enabled by default (user-authorized 2026-10-31); live refresh and Splendent import checked in the `.e2e` app; MT-1 checks 4 and 6 not tested; no pagination beyond 1000 items. Community recipe imports (Splendent model, gamers4.life graph): built, tested, run once in the `.e2e` app; morph/conversion routes and combo chances not used |
+| Not available | Verified AION 2 Global recipe/item/price data (only community data, imported by the user; nothing shipped); XLSX import; edit/delete of markets and sources; item archiving; nested categories; item icons; code signing; auto-update |
 
 ## Known gaps and assumptions
 
@@ -280,11 +302,10 @@ the retrieval time (hover: "Observed … · retrieved …", README 16.4).
 - No item icons. Installers are not code-signed.
 - The 4 DEMO items and 2 DEMO recipes are still in the local database: remove them with
   Settings > Demo / test data.
-- Git repository (branch `main`, no remote) since 2026-10-31.
+- Git repository (branch `main`) since 2026-10-31; pushed to `https://github.com/zetrox75-jpg/SonOfAlfred` on 2026-10-31.
+- Same-name item variants in the gamers4.life graph are merged into one item (the market and the
+  catalogue identify items by name); a sell price may belong to only one of the variants.
 
 ## Next
 
-1. Clean-install test of both installers (Deferred / Not yet verified): `docs/INSTALL.md`,
-   "Clean-install test". Mark step 5 done only when it passes.
-2. Optional, when the operator answers: record the permission in `docs/DATA_SOURCES.md` and the
-   in-app notice.
+See `HANDOFF.md`, "Next tasks, in priority order".
