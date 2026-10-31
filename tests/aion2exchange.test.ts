@@ -159,6 +159,22 @@ describe("storage", () => {
     expect(book.sell.get(7)).toBeUndefined();
   });
 
+  it("addMissing: creates listed items once (Global, community, provider source) and prices them", () => {
+    const catalogue = new Map([[itemKey("Amplify Stone (Unique)", "GLOBAL"), 7]]);
+    const n = normalizeItems(items, catalogue, true);
+    const listed = items.items.filter((i) => i.listed && i.name && Number.isSafeInteger(i.price)).length;
+    expect(n).toMatchObject({ unmatched: 0, added: listed - 1 });
+    run(observationStatements(1, n.observations, "2026-10-31T03:00:00Z"));
+    const created = db.prepare("SELECT i.game_region, i.verification_status, s.name AS source, c.name AS category FROM items i JOIN data_sources s ON s.id = i.source_id LEFT JOIN categories c ON c.id = i.category_id WHERE i.id <> 7").all();
+    expect(created).toHaveLength(listed - 1);
+    expect(created[0]).toMatchObject({ game_region: "GLOBAL", verification_status: "community", source: "aion2.exchange" });
+    expect(created.every((r) => (r as { category: string | null }).category)).toBe(true);
+    expect(db.prepare("SELECT COUNT(DISTINCT item_id) n FROM market_prices WHERE market_id = 1").get()).toMatchObject({ n: listed });
+    // Same items offered again as new (stale catalogue): the NOT EXISTS guard adds no duplicate.
+    run(observationStatements(1, normalizeItems(items, catalogue, true).observations, "2026-10-31T04:00:00Z"));
+    expect(db.prepare("SELECT COUNT(*) n FROM items").get()).toMatchObject({ n: listed });
+  });
+
   it("one market per provider server", () => {
     expect(() => db.exec("INSERT INTO markets (name, provider_server) VALUES ('dup', 'aion2.exchange:11304')")).toThrow();
   });

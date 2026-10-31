@@ -41,7 +41,7 @@ Runtime data: `%APPDATA%\com.aion2.craftprofitmanager\aion2.db`, backups in `bac
 
 ```bash
 npx tsc --noEmit                             # no errors
-npx vitest run                               # 10 files, 101 tests passed (incl. Market refresh, jsdom)
+npx vitest run                               # 10 files, 103 tests passed (incl. Market refresh, jsdom)
 npm run build                                # built (Recharts chunk > 500 kB warning only)
 cd src-tauri && cargo clippy --all-targets   # no warnings
 cd src-tauri && cargo test --lib             # 4 passed (backup.rs)
@@ -76,8 +76,9 @@ and never called.
 - A `tauri dev` instance on the real DB (ports 1420/9333) from an earlier session was running
   during this session and was left alone; it was no longer running at the end.
 
-- **Live aion2.exchange test (MT-1, `docs/MANUAL_TESTS.md`): first run stored 0 prices**; probable
-  cause fixed in `8e2d3db` (nullable item name). Retest by the human operator pending.
+- Live aion2.exchange test (MT-1, `docs/MANUAL_TESTS.md`): first run stored 0 prices; fixed in
+  `8e2d3db` (nullable item name). Retest by the user at `7ddc064`: 9 of 10 test items priced on
+  Kromede Asmodian. Checks 2-8 and the new opt-in (check 9) not yet reported.
 - The Claude desktop app is an MSIX package: processes started by the assistant see a virtualized
   `%APPDATA%` (`%LOCALAPPDATA%\Packages\Claude_*\LocalCache\Roaming\...`), not the user's real
   database. Ask the user for a backup file (or read files under `...\backups\` that the user saved)
@@ -108,8 +109,9 @@ Market: aion2.exchange adapter as above; others not used. Details: `docs/DATA_SO
 
 ## Next tasks, in priority order
 
-1. MT-1 retest of the live refresh, by the user (`docs/MANUAL_TESTS.md`). Rebuild first (the
-   current installers predate the provider interface).
+1. Finish MT-1 checks 2-9 with the user (`docs/MANUAL_TESTS.md`); check 9 = opt-in "Also add listed
+   items missing from my catalogue". Installers predate the provider interface: rebuild before
+   using them.
 2. Clean-install test of both installers (Deferred / Not yet verified), by the user on a clean
    Windows environment: `docs/INSTALL.md`, "Clean-install test". Record the result in
    `docs/PROJECT_STATUS.md`; mark step 5 done only if it passes.

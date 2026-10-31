@@ -68,6 +68,7 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
   const [servers, setServers] = useState<ProviderServer[] | null>(null);
   const [pick, setPick] = useState("");
   const [busy, setBusy] = useState(false);
+  const [addMissing, setAddMissing] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const run = async (f: () => Promise<string | void>) => {
     setBusy(true);
@@ -101,9 +102,12 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
             <div className="flex flex-wrap items-center gap-3">
               <span>“{market.name}” receives the cheapest listings of server <strong>{market.server}</strong> ({market.faction}).</span>
               <Button variant="primary" disabled={busy || (next !== null && !next.allowed)}
-                onClick={() => run(() => refreshMarket({ id: market.id, name: market.name, provider_server: market.provider_server }))}>
+                onClick={() => run(() => refreshMarket({ id: market.id, name: market.name, provider_server: market.provider_server }, { addMissing }))}>
                 {busy ? "Refreshing..." : "Refresh prices"}
               </Button>
+              <label className="flex items-center gap-1.5 text-xs text-slate-400" title="Creates Global items with status community (not verified), source and date recorded. Recipes are never created.">
+                <input type="checkbox" checked={addMissing} onChange={(e) => setAddMissing(e.target.checked)} /> Also add listed items missing from my catalogue
+              </label>
               {next && !next.allowed && <span className="text-xs text-slate-500">cached; next refresh after {new Date(next.nextAt).toLocaleTimeString()}</span>}
             </div>
           ) : (

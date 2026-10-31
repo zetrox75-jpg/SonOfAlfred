@@ -20,14 +20,15 @@ export function createMockMarketDataProvider(now = Date.now()) {
     id: "mock",
     source: { name: "MOCK provider (fictional test data)", url: "https://example.invalid/mock", sourceType: "community", notes: "Test fixture, not real data." },
     capabilities: { priceKinds: ["lowest_listing"], history: false },
-    fetchPrices: vi.fn(async ({ catalogue }) => {
+    fetchPrices: vi.fn(async ({ catalogue, addMissing }) => {
       const prices: NormalizedPrice[] = [];
       let unmatched = 0;
       for (const p of fixture.prices) {
         const itemId = catalogue.get(itemKey(p.item, "GLOBAL"));
-        if (itemId === undefined) { unmatched++; continue; }
+        if (itemId === undefined && !addMissing) { unmatched++; continue; }
         prices.push({
-          itemId, unitPrice: p.unit_price, quantityObserved: p.quantity,
+          itemId: itemId ?? 0, ...(itemId === undefined && { newItem: { name: p.item, category: null } }),
+          unitPrice: p.unit_price, quantityObserved: p.quantity,
           observedAt: new Date(now - p.observed_minutes_ago * 60_000).toISOString(),
           sourceRef: `mock:item/${p.item}`, raw: JSON.stringify(p),
         });

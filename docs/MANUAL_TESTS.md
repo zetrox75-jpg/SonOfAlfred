@@ -45,6 +45,7 @@ user agent.
 | 6 | No cross-server fallback | Select another market (other server or faction): the refreshed prices do **not** appear there |
 | 7 | Rate limit | The button is disabled for one hour after the refresh ("cached; next refresh after …") |
 | 8 | Kind | Prices appear only in the "Lowest active listing" column, never in "Completed sale" |
+| 9 | Optional: "Also add listed items missing from my catalogue" ticked | Result line says `N new item(s) added to your catalogue (community, not verified)`; the items appear with a COMMUNITY status and a price; typing in Search items suggests their names. Runs only on the next allowed refresh (1 h limit) |
 
 ### Read the results (optional, read-only)
 
@@ -67,5 +68,6 @@ taken before the test.
 
 | Date | Provider | Region | Server | Faction | Outcome (result line) | Checks 1-8 | Notes |
 |------|----------|--------|--------|---------|-----------------------|------------|-------|
-| 2026-10-31 | aion2.exchange | EU | Kromede | Asmodian | Before fix `8e2d3db`: refresh attempted, **0 prices stored**, error message lost | not done | Likely cause fixed (nullable item name). Retest pending |
+| 2026-10-31 | aion2.exchange | EU | Kromede | Asmodian | Before fix `8e2d3db`: refresh attempted, **0 prices stored**, error message lost | not done | Likely cause fixed (nullable item name) |
+| 2026-10-31 | aion2.exchange | EU | Kromede | Asmodian | `9 catalogue item(s) priced from aion2.exchange. 494 listed item(s) not in your catalogue, 353 skipped (not listed or no price).` | 1 passed; 2-8 not reported yet | `npm run tauri dev` at `7ddc064`; 10 test items imported, 9 priced |
 | | | | | | | | |

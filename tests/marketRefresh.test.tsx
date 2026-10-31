@@ -113,3 +113,25 @@ it("Refresh calls the provider once and shows its prices with source and timesta
   expect(tauriFetch).not.toHaveBeenCalled();
   expect(JSON.stringify(vi.mocked(invoke).mock.calls)).not.toContain("aion2.exchange");
 });
+
+it("opt-in: listed items missing from the catalogue are added (community) and priced; search suggests them", async () => {
+  const market = container.querySelector<HTMLSelectElement>('select[aria-label="Market"]')!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!.call(market, "2");
+    market.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  const button = await waitFor(() => container.textContent!.includes("MOCK Server B") && [...container.querySelectorAll("button")].find((b) => b.textContent === "Refresh prices" && !b.disabled), "server B refresh");
+  const optIn = [...container.querySelectorAll("label")].find((l) => l.textContent!.includes("Also add listed items missing"))!.querySelector("input")!;
+  await act(async () => optIn.click());
+  await act(async () => button.click());
+  await waitFor(() => container.textContent!.includes("3 catalogue item(s) priced from MOCK provider (fictional test data)"), "add summary");
+
+  const NEW = "MOCK Not In Catalogue (fictional)";
+  expect(db.prepare("SELECT game_region, verification_status FROM items WHERE name = ?").all(NEW)).toMatchObject([{ game_region: "GLOBAL", verification_status: "community" }]);
+  await waitFor(() => row(NEW) && lowestListingCell(NEW).textContent!.startsWith("99"), "new item priced");
+  const search = container.querySelector<HTMLInputElement>('input[aria-label="Search items"]')!;
+  const options = [...document.getElementById(search.getAttribute("list")!)!.querySelectorAll("option")].map((o) => o.value);
+  expect(options).toContain(NEW);
+  expect(mock.fetchPrices).toHaveBeenCalledTimes(1); // mocks are cleared between tests
+  expect(networkCalls).toEqual([]);
+}, 15_000);

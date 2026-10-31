@@ -20,6 +20,8 @@ export interface PriceContext {
   serverId: number;
   /** itemKey(name, region) -> catalogue item id */
   catalogue: Map<string, number>;
+  /** Also return listed items missing from the catalogue, as `newItem` observations. */
+  addMissing?: boolean;
 }
 
 export interface MarketDataProvider {

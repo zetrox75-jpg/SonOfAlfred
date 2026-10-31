@@ -81,7 +81,7 @@ function Market({ data, onNavigate }: { data: Workspace; onNavigate: (id: string
         <>
           <ManualEntry data={data} />
           <div className="flex flex-wrap items-center gap-3">
-            <input aria-label="Search items" placeholder="Search items..." className={`${inputCls} max-w-sm`} value={text} onChange={(e) => setText(e.target.value)} />
+            <input aria-label="Search items" placeholder="Search items..." list="market-items" className={`${inputCls} max-w-sm`} value={text} onChange={(e) => setText(e.target.value)} />
             <label className="flex items-center gap-1.5 text-sm text-slate-400"><input type="checkbox" checked={pricedOnly} onChange={(e) => setPricedOnly(e.target.checked)} /> With a price only</label>
           </div>
           <div className="overflow-x-auto rounded-lg border border-night-700">

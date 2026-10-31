@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { itemKey } from "../../domain/validation/catalogue";
+import { itemKey, normalizeName } from "../../domain/validation/catalogue";
 import type { Statement } from "../catalogueStatements";
 import type { ProviderSource } from "./provider";
 
@@ -57,6 +57,7 @@ export type ProviderServer = z.infer<typeof Server>;
 const Item = z.object({
   item_key: z.number().int().positive(),
   name: z.string().nullable(), // nullable in the API's own schema (ItemSummary)
+  category: z.object({ name: z.string() }).nullable().optional(),
   price: z.number().nullable(),
   listings: z.number().int().nullable(),
   captured_at: z.string().nullable(),
@@ -95,7 +96,10 @@ export function parse<S extends z.ZodType>(schema: S, json: unknown, what: strin
 // ---- Normalization into the app's price model ----
 
 export interface Observation {
+  /** 0 when `newItem` is set: the item is created in the same transaction, then matched by name. */
   itemId: number;
+  /** A listed item the user chose to add to the catalogue (Global, status `community`). */
+  newItem?: { name: string; category: string | null };
   unitPrice: number;
   quantityObserved: number | null;
   observedAt: string;
@@ -109,6 +113,8 @@ export interface Normalized {
   unmatched: number;
   /** Not listed, no price, or a price that is not a whole number. */
   skipped: number;
+  /** Listed items not in the catalogue, returned as `newItem` observations (addMissing). */
+  added: number;
 }
 
 export const sourceRef = (itemKeyValue: number) => `aion2.exchange:item/${itemKeyValue}`;
@@ -118,21 +124,24 @@ export const serverRef = (serverId: number) => `aion2.exchange:${serverId}`;
 /**
  * Current cheapest listings -> lowest_listing observations for catalogue items.
  * Items are matched by name to GLOBAL catalogue items (`catalogue`: itemKey(name, region) -> id).
+ * With `addMissing`, listed items not in the catalogue are returned as `newItem` observations.
  */
-export function normalizeItems(res: z.output<typeof ItemsResponse>, catalogue: Map<string, number>): Normalized {
-  const out: Normalized = { observations: [], unmatched: 0, skipped: 0 };
+export function normalizeItems(res: z.output<typeof ItemsResponse>, catalogue: Map<string, number>, addMissing = false): Normalized {
+  const out: Normalized = { observations: [], unmatched: 0, skipped: 0, added: 0 };
   for (const it of res.items) {
     if (!it.listed || it.name === null || it.price === null || !Number.isSafeInteger(it.price) || it.price < 0 || !it.captured_at) {
       out.skipped++;
       continue;
     }
     const itemId = catalogue.get(itemKey(it.name, PROVIDER.gameRegion));
-    if (itemId === undefined) {
+    if (itemId === undefined && !addMissing) {
       out.unmatched++;
       continue;
     }
+    if (itemId === undefined) out.added++;
     out.observations.push({
-      itemId,
+      itemId: itemId ?? 0,
+      ...(itemId === undefined && { newItem: { name: it.name, category: it.category?.name ?? null } }),
       unitPrice: it.price,
       quantityObserved: it.listings,
       observedAt: new Date(it.captured_at).toISOString(),
@@ -145,7 +154,7 @@ export function normalizeItems(res: z.output<typeof ItemsResponse>, catalogue: M
 
 /** Price history -> one lowest_listing observation per bucket (the bucket's last cheapest price). */
 export function normalizePrices(res: z.output<typeof PricesResponse>, itemId: number): Normalized {
-  const out: Normalized = { observations: [], unmatched: 0, skipped: 0 };
+  const out: Normalized = { observations: [], unmatched: 0, skipped: 0, added: 0 };
   for (const p of res.points) {
     if (!Number.isSafeInteger(p.close) || p.close < 0) {
       out.skipped++;
@@ -178,12 +187,31 @@ export function observationStatements(marketId: number, obs: Observation[], retr
             VALUES (?, ?, ?, ?, 0) ON CONFLICT (name) DO NOTHING`,
       params: [source.name, source.url, source.sourceType, source.notes],
     },
+    ...obs.flatMap((o) => (o.newItem ? newItemStatements(o.newItem, source, retrievedAt) : [])),
     ...obs.map((o) => ({
       sql: `INSERT OR IGNORE INTO market_prices (item_id, market_id, price_kind, unit_price, quantity_observed, source_id,
               source_ref, observed_at, retrieved_at, raw_snapshot)
-            VALUES (?, ?, 'lowest_listing', ?, ?, (SELECT id FROM data_sources WHERE name = ?), ?, ?, ?, ?)`,
-      params: [o.itemId, marketId, o.unitPrice, o.quantityObserved, source.name, o.sourceRef, o.observedAt, retrievedAt, o.raw],
+            VALUES (COALESCE(NULLIF(?, 0), (SELECT id FROM items WHERE normalized_name = ? AND game_region = 'GLOBAL')),
+                    ?, 'lowest_listing', ?, ?, (SELECT id FROM data_sources WHERE name = ?), ?, ?, ?, ?)`,
+      params: [o.itemId, o.newItem ? normalizeName(o.newItem.name) : null, marketId, o.unitPrice, o.quantityObserved, source.name,
+        o.sourceRef, o.observedAt, retrievedAt, o.raw],
     })),
+  ];
+}
+
+/** A Global catalogue item (status `community`, provenance = the provider) unless one of that name exists. */
+function newItemStatements(item: { name: string; category: string | null }, source: ProviderSource, retrievedAt: string): Statement[] {
+  return [
+    ...(item.category ? [{ sql: "INSERT OR IGNORE INTO categories (name) VALUES (?)", params: [item.category] }] : []),
+    {
+      sql: `INSERT INTO items (name, normalized_name, category_id, game_region, verification_status, source_id, description)
+            SELECT ?, ?, (SELECT id FROM categories WHERE name = ? AND parent_id IS NULL), 'GLOBAL', 'community',
+                   (SELECT id FROM data_sources WHERE name = ?), ?
+            WHERE NOT EXISTS (SELECT 1 FROM items WHERE normalized_name = ? AND game_region = 'GLOBAL')`,
+      params: [item.name, normalizeName(item.name), item.category, source.name,
+        `Added from the ${source.name} item list on ${retrievedAt.slice(0, 10)}. Name and category only; not verified.`,
+        normalizeName(item.name)],
+    },
   ];
 }
 

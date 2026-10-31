@@ -235,7 +235,8 @@ Unsigned installers: Windows SmartScreen may warn. WebView2: default `downloadBo
 | Layer | What | Result |
 |-------|------|--------|
 | Automated | `tests/marketRefresh.test.tsx` (jsdom): Market page rendered with `MockMarketDataProvider` (`tests/mocks/`, fictional fixture `tests/fixtures/market/mock-prices.json`, `_fixture: true`, `_source: "mock"`), user click on Refresh prices; checks one provider call, price + source + observed/retrieved timestamps, stale shown as stale, missing shown as `-`, no cross-server fallback, no network (all fetch/invoke spied) | `npm test -- tests/marketRefresh.test.tsx`: 1 passed; mutation check (tooltip without retrieval time) fails as expected |
-| Manual | `docs/MANUAL_TESTS.md` MT-1, run by the human operator only; read-only helper `tests/manual/read-market-results.mjs` | first run before fix `8e2d3db`: 0 prices stored; **retest pending** |
+| Manual | `docs/MANUAL_TESTS.md` MT-1, run by the human operator only; read-only helper `tests/manual/read-market-results.mjs` | before fix `8e2d3db`: 0 prices stored; retest at `7ddc064` (Kromede Asmodian, EU): **9 of 10 test items priced**, 494 not in catalogue, 353 skipped. Checks 2-8 not reported yet |
+| Automated | Opt-in "add listed items missing from my catalogue": adapter test (items created once, Global, community, provider source, category, priced; NOT EXISTS guard against duplicates) and Market page test (checkbox, new item priced, search suggestion) | 103/103 |
 
 Live finding fixed in `8e2d3db`: the API schema allows `name: null` for items; one such item made
 the whole `/api/items` response fail validation, so nothing was stored. Price labels now also show

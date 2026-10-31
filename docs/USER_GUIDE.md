@@ -50,6 +50,11 @@ Disabled by default. Its permission to be used by this app is **not confirmed** 
 Settings). If you enable it, refreshes happen only when you press a button, at most once per hour
 per request, and prices are stored as "lowest active listing".
 
+Tick **Also add listed items missing from my catalogue** before *Refresh prices* to build a full
+price list for that server in one refresh: every listed item with a price is added as a Global item
+with status `community` (name and category only, source and date recorded; never a recipe), then
+priced. The Market page search box suggests item names as you type.
+
 ## Demo data
 
 The files in `data/templates/demo/` are fictional (region OTHER, source type `demo`).

@@ -121,24 +121,23 @@ const aion2exchange: MarketDataProvider = {
   id: AION2EXCHANGE,
   source: SOURCE,
   capabilities: { priceKinds: ["lowest_listing"], history: true },
-  async fetchPrices({ serverId, catalogue }) {
+  async fetchPrices({ serverId, catalogue, addMissing }) {
     const res = parse(ItemsResponse, await getJson(urls.items(serverId)), "items");
-    const n = normalizeItems(res, catalogue);
+    const n = normalizeItems(res, catalogue, addMissing);
     const partial = res.total > res.items.length ? ` Only the first ${res.items.length} of ${res.total} items were requested.` : "";
-    return Object.assign(n.observations, {
-      note: `${n.unmatched} listed item(s) not in your catalogue, ${n.skipped} skipped (not listed or no price).${partial}`,
-    });
+    const missing = addMissing ? `${n.added} new item(s) added to your catalogue (community, not verified)` : `${n.unmatched} listed item(s) not in your catalogue`;
+    return Object.assign(n.observations, { note: `${missing}, ${n.skipped} skipped (not listed or no price).${partial}` });
   },
 };
 registerProvider(aion2exchange);
 
 /** Current prices for every Global catalogue item, from the market's own provider and server only. */
-export async function refreshMarket(market: { id: number; name: string; provider_server: string | null }): Promise<string> {
+export async function refreshMarket(market: { id: number; name: string; provider_server: string | null }, opts: { addMissing?: boolean } = {}): Promise<string> {
   const { provider, serverId } = providerFor(market.provider_server);
   return guarded(`items:${serverId}`, async () => {
     const items = await (await getDb()).select<{ id: number; name: string; game_region: string }[]>(
       "SELECT id, name, game_region FROM items WHERE archived_at IS NULL AND game_region = 'GLOBAL'");
-    const prices = await provider.fetchPrices({ serverId, catalogue: new Map(items.map((i) => [itemKey(i.name, i.game_region), i.id])) });
+    const prices = await provider.fetchPrices({ serverId, catalogue: new Map(items.map((i) => [itemKey(i.name, i.game_region), i.id])), addMissing: opts.addMissing });
     const summary = `${market.name}: ${prices.length} catalogue item(s) priced from ${provider.source.name}. ${prices.note ?? ""}`.trim();
     return { result: summary, summary, statements: observationStatements(market.id, prices, new Date().toISOString(), provider.source) };
   }, provider.id);
