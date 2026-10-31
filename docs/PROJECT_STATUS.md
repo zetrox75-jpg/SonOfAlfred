@@ -204,8 +204,11 @@ tools from GitHub (NSIS 3.13, nsis_tauri_utils 0.5.3, WiX 3.14). Artifacts actua
 
 | Artifact | Size | SHA-256 |
 |----------|------|---------|
-| `src-tauri/target/release/bundle/nsis/AION 2 Craft Profit Manager_0.1.0_x64-setup.exe` | 3.73 MiB | `D0DF61C12AD54847516CA4980C99D5DD11C653288F6A54EDA2503C6F933FD78D` |
-| `src-tauri/target/release/bundle/msi/AION 2 Craft Profit Manager_0.1.0_x64_en-US.msi` | 5.07 MiB | `0479C49120A461D07616803F277D9B6B403C7BE75DFB4D9899D2E9F79D244470` |
+| `src-tauri/target/release/bundle/nsis/AION 2 Craft Profit Manager_0.1.0_x64-setup.exe` | 3.73 MiB | `73967932C02E105A4DA9B69213781662F11B980EBF81E1BA6050B055988B967B` |
+| `src-tauri/target/release/bundle/msi/AION 2 Craft Profit Manager_0.1.0_x64_en-US.msi` | 5.07 MiB | `A9106A2C712A7665B4D202A86516F0AF02686DF21A11B9754B36B2577149702A` |
+
+Rebuilt 2026-10-31 07:15 from commit `8e2d3db` (null item name fix). They predate the provider
+interface and the retrieval-time label: rebuild before MT-1 check 3.
 
 Not validated: no clean Windows environment is available to the assistant (Windows Sandbox is not
 installed here; enabling it needs administrator rights). The installers were not run on this PC,
@@ -226,6 +229,17 @@ Unsigned installers: Windows SmartScreen may warn. WebView2: default `downloadBo
 | `docs/INSTALL.md` | installers, SmartScreen, WebView2, data and backup locations, backup, restore (in app and by hand), migration safety, troubleshooting, known limitations, clean-install test procedure |
 | `docs/USER_GUIDE.md` | first steps, screens, how to read results, provider, demo data |
 | `docs/TECHNICAL.md` | architecture, DB access, commands, migrations and start-up guard, restore internals, permissions, tests and checks |
+
+### Market refresh tests (2026-10-31, after step 5)
+
+| Layer | What | Result |
+|-------|------|--------|
+| Automated | `tests/marketRefresh.test.tsx` (jsdom): Market page rendered with `MockMarketDataProvider` (`tests/mocks/`, fictional fixture `tests/fixtures/market/mock-prices.json`, `_fixture: true`, `_source: "mock"`), user click on Refresh prices; checks one provider call, price + source + observed/retrieved timestamps, stale shown as stale, missing shown as `-`, no cross-server fallback, no network (all fetch/invoke spied) | `npm test -- tests/marketRefresh.test.tsx`: 1 passed; mutation check (tooltip without retrieval time) fails as expected |
+| Manual | `docs/MANUAL_TESTS.md` MT-1, run by the human operator only; read-only helper `tests/manual/read-market-results.mjs` | first run before fix `8e2d3db`: 0 prices stored; **retest pending** |
+
+Live finding fixed in `8e2d3db`: the API schema allows `name: null` for items; one such item made
+the whole `/api/items` response fail validation, so nothing was stored. Price labels now also show
+the retrieval time (hover: "Observed … · retrieved …", README 16.4).
 
 ## Features: finished, partial, not available (README 12)
 
@@ -248,8 +262,9 @@ Unsigned installers: Windows SmartScreen may warn. WebView2: default `downloadBo
   1000 items, the refresh reports that only part was requested (no pagination yet).
   Items are matched to the catalogue by exact name (case/spacing ignored), Global items only.
   The undocumented `sold_*` statistics are ignored.
-- Only one provider exists, so there is no provider registry/interface abstraction; the adapter is
-  the `aion2exchange` module plus `refresh.ts`. Add the abstraction with a second provider.
+- Providers implement `MarketDataProvider` (`src/services/market/provider.ts`, README 16.3) and are
+  registered by id; a market's `provider_server` is `<provider id>:<server id>`. Real provider:
+  aion2.exchange (`refresh.ts`). The second implementation is the test-only mock provider.
 - Price import rows that fail the format check are not also checked for unknown items/markets
   in the same pass: fix the reported errors and re-import to see the rest.
 - XLSX is not read: save as CSV UTF-8 from Excel.

@@ -64,9 +64,9 @@ export const tierOf = (sourceType: string): PriceTier =>
 
 /** Latest observation per (item, kind, source, override flag) in ONE market. */
 export const LATEST_PRICES_SQL = `
-  SELECT item_id, price_kind, unit_price, observed_at, quantity_observed, is_override, source, source_type
+  SELECT item_id, price_kind, unit_price, observed_at, retrieved_at, quantity_observed, is_override, source, source_type
   FROM (
-    SELECT mp.item_id, mp.price_kind, mp.unit_price, mp.observed_at, mp.quantity_observed, mp.is_override,
+    SELECT mp.item_id, mp.price_kind, mp.unit_price, mp.observed_at, mp.retrieved_at, mp.quantity_observed, mp.is_override,
            s.name AS source, s.source_type,
            ROW_NUMBER() OVER (PARTITION BY mp.item_id, mp.price_kind, mp.source_id, mp.is_override
                               ORDER BY mp.observed_at DESC, mp.id DESC) AS rn
@@ -79,6 +79,7 @@ export interface PriceRow {
   price_kind: PriceKind;
   unit_price: number;
   observed_at: string;
+  retrieved_at: string;
   quantity_observed: number | null;
   is_override: number;
   source: string;
@@ -86,6 +87,8 @@ export interface PriceRow {
 }
 
 export interface ResolvedPrice extends PricePoint {
+  /** When the app stored it (README 16.4); observedAt is when the source saw it. */
+  retrievedAt: string;
   kind: PriceKind;
   tier: PriceTier;
   override: boolean;
@@ -105,7 +108,7 @@ export function resolveKind(rows: PriceRow[], kind: PriceKind, now: Date, freshn
   for (const r of rows) {
     if (r.price_kind !== kind) continue;
     const c: ResolvedPrice = {
-      unitPrice: r.unit_price, observedAt: r.observed_at, source: r.source, kind,
+      unitPrice: r.unit_price, observedAt: r.observed_at, retrievedAt: r.retrieved_at, source: r.source, kind,
       stale: isStale(r.observed_at, now, freshnessHours), tier: tierOf(r.source_type), override: r.is_override === 1,
     };
     const b = best.get(r.item_id);

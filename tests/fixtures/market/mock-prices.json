@@ -1,0 +1,10 @@
+{
+  "_fixture": true,
+  "_source": "mock",
+  "_note": "FICTIONAL items and prices for automated tests only. Not AION 2 data, not from any website. Observation times are relative to the test run (observed_minutes_ago), so no price is ever presented as a real current price.",
+  "prices": [
+    { "item": "MOCK Fresh Ore (fictional)", "unit_price": 1234, "quantity": 7, "observed_minutes_ago": 30 },
+    { "item": "MOCK Old Herb (fictional)", "unit_price": 555, "quantity": 2, "observed_minutes_ago": 4320 },
+    { "item": "MOCK Not In Catalogue (fictional)", "unit_price": 99, "quantity": 1, "observed_minutes_ago": 10 }
+  ]
+}

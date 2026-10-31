@@ -13,6 +13,7 @@ import {
   PricesResponse,
   PROVIDER,
   readStatus,
+  SOURCE,
   serverRef,
   ServersResponse,
   STATUS_KEY,
@@ -21,17 +22,21 @@ import {
   type ProviderServer,
   type ProviderStatus,
 } from "./aion2exchange";
+import { providerFor, registerProvider, statusKeyOf, type MarketDataProvider } from "./provider";
 
 // The only code that talks to aion2.exchange. Every request starts from an explicit user
 // action, needs the provider enabled, and obeys the one-hour cache. The capability file also
 // limits the HTTP plugin to https://aion2.exchange/api/*.
 
-export async function loadStatus(): Promise<ProviderStatus> {
-  const rows = await (await getDb()).select<{ value: string }[]>("SELECT value FROM settings WHERE key = ?", [STATUS_KEY]);
+/** Id of the aion2.exchange provider: the prefix of its markets' `provider_server` ("aion2.exchange:<server>"). */
+export const AION2EXCHANGE = "aion2.exchange";
+
+export async function loadStatus(providerId = AION2EXCHANGE): Promise<ProviderStatus> {
+  const rows = await (await getDb()).select<{ value: string }[]>("SELECT value FROM settings WHERE key = ?", [statusKeyOf(providerId)]);
   return readStatus(rows[0]?.value);
 }
 
-const saveStatus = (s: ProviderStatus) => writeTransaction([statusStatement(s)]);
+const saveStatus = (s: ProviderStatus, providerId = AION2EXCHANGE) => writeTransaction([statusStatement(s, statusKeyOf(providerId))]);
 
 export async function setEnabled(enabled: boolean): Promise<void> {
   const s = await loadStatus();
@@ -61,9 +66,9 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 /** Guards, request, and status bookkeeping shared by every provider action. */
-async function guarded<T>(cacheKey: string, action: () => Promise<{ result: T; summary: string; statements?: Parameters<typeof writeTransaction>[0] }>): Promise<T> {
-  const status = await loadStatus();
-  if (!status.enabled) throw new Error("The aion2.exchange provider is disabled. Enable it in Settings after reading the notice.");
+async function guarded<T>(cacheKey: string, action: () => Promise<{ result: T; summary: string; statements?: Parameters<typeof writeTransaction>[0] }>, providerId = AION2EXCHANGE): Promise<T> {
+  const status = await loadStatus(providerId);
+  if (!status.enabled) throw new Error(`The ${providerId} provider is disabled. Enable it in Settings after reading the notice.`);
   const check = canRefresh(status.refreshedAt[cacheKey] ?? null, new Date());
   if (!check.allowed) throw new Error(`Already refreshed less than an hour ago (the API caches for 1 h). Next refresh after ${new Date(check.nextAt).toLocaleTimeString()}.`);
   const now = new Date().toISOString();
@@ -71,11 +76,11 @@ async function guarded<T>(cacheKey: string, action: () => Promise<{ result: T; s
   try {
     const { result, summary, statements = [] } = await action();
     // Observations and the success status are written together.
-    await writeTransaction([...statements, statusStatement({ ...attempt, lastSuccessAt: now, lastError: null, lastResult: summary })]);
+    await writeTransaction([...statements, statusStatement({ ...attempt, lastSuccessAt: now, lastError: null, lastResult: summary }, statusKeyOf(providerId))]);
     return result;
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    await saveStatus({ ...attempt, lastError: message });
+    await saveStatus({ ...attempt, lastError: message }, providerId);
     throw new Error(message);
   }
 }
@@ -112,17 +117,31 @@ const serverIdOf = (providerServer: string | null) => {
   return Number(m[1]);
 };
 
-/** Current cheapest listings for every catalogue item, into this market only. */
-export async function refreshMarket(market: { id: number; name: string; provider_server: string | null }): Promise<string> {
-  const serverId = serverIdOf(market.provider_server);
-  return guarded(`items:${serverId}`, async () => {
+const aion2exchange: MarketDataProvider = {
+  id: AION2EXCHANGE,
+  source: SOURCE,
+  capabilities: { priceKinds: ["lowest_listing"], history: true },
+  async fetchPrices({ serverId, catalogue }) {
     const res = parse(ItemsResponse, await getJson(urls.items(serverId)), "items");
+    const n = normalizeItems(res, catalogue);
+    const partial = res.total > res.items.length ? ` Only the first ${res.items.length} of ${res.total} items were requested.` : "";
+    return Object.assign(n.observations, {
+      note: `${n.unmatched} listed item(s) not in your catalogue, ${n.skipped} skipped (not listed or no price).${partial}`,
+    });
+  },
+};
+registerProvider(aion2exchange);
+
+/** Current prices for every Global catalogue item, from the market's own provider and server only. */
+export async function refreshMarket(market: { id: number; name: string; provider_server: string | null }): Promise<string> {
+  const { provider, serverId } = providerFor(market.provider_server);
+  return guarded(`items:${serverId}`, async () => {
     const items = await (await getDb()).select<{ id: number; name: string; game_region: string }[]>(
       "SELECT id, name, game_region FROM items WHERE archived_at IS NULL AND game_region = 'GLOBAL'");
-    const n = normalizeItems(res, new Map(items.map((i) => [itemKey(i.name, i.game_region), i.id])));
-    const summary = `${market.name}: ${n.observations.length} catalogue item(s) priced, ${n.unmatched} listed item(s) not in your catalogue, ${n.skipped} skipped (not listed or no price). ${res.total > res.items.length ? `Only the first ${res.items.length} of ${res.total} items were requested.` : ""}`.trim();
-    return { result: summary, summary, statements: observationStatements(market.id, n.observations, new Date().toISOString()) };
-  });
+    const prices = await provider.fetchPrices({ serverId, catalogue: new Map(items.map((i) => [itemKey(i.name, i.game_region), i.id])) });
+    const summary = `${market.name}: ${prices.length} catalogue item(s) priced from ${provider.source.name}. ${prices.note ?? ""}`.trim();
+    return { result: summary, summary, statements: observationStatements(market.id, prices, new Date().toISOString(), provider.source) };
+  }, provider.id);
 }
 
 /** 7-day cheapest-listing history of one item, into this market only. */

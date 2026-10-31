@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button, Card, ErrorBox, Loading, useAsync } from "../../components/ui";
 import type { Workspace } from "../../services/plan";
 import { PROVIDER, canRefresh, type ProviderServer } from "../../services/market/aion2exchange";
-import { createMarketForServer, fetchServers, loadHistory, loadStatus, refreshMarket, setEnabled } from "../../services/market/refresh";
+import { AION2EXCHANGE, createMarketForServer, fetchServers, loadHistory, loadStatus, refreshMarket, setEnabled } from "../../services/market/refresh";
+import { providerById } from "../../services/market/provider";
 import { useWorkspace } from "../crafting/workspace";
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "never");
@@ -60,7 +61,10 @@ export function ProviderSettingsCard() {
 /** Market page: link a market to one server, refresh it on request. */
 export function ProviderMarketCard({ data }: { data: Workspace }) {
   const { ws } = useWorkspace();
-  const q = useAsync(loadStatus);
+  // Status and source of the provider the selected market is linked to (aion2.exchange otherwise).
+  const providerId = data.market?.provider_server?.match(/^(.+):\d+$/)?.[1] ?? AION2EXCHANGE;
+  const source = providerById(providerId)?.source;
+  const q = useAsync(() => loadStatus(providerId));
   const [servers, setServers] = useState<ProviderServer[] | null>(null);
   const [pick, setPick] = useState("");
   const [busy, setBusy] = useState(false);
@@ -88,7 +92,7 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
   const next = serverId ? canRefresh(s.refreshedAt[`items:${serverId}`] ?? null, new Date()) : null;
 
   return (
-    <Card title="Automatic prices: aion2.exchange (unofficial)">
+    <Card title={`Automatic prices: ${source?.name ?? providerId}${source?.sourceType === "official" ? "" : " (unofficial)"}`}>
       {!s.enabled ? (
         <p className="text-sm text-slate-400">Disabled. Read the notice and enable it in Settings. Manual entry and CSV import keep working without it.</p>
       ) : (

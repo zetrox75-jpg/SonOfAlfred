@@ -205,7 +205,8 @@ export function PriceLabel({ point, money }: { point: ResolvedPrice; money: Retu
   return (
     <>
       <span className="num text-slate-100 group-hover:underline">{money(point.unitPrice)}</span>
-      <span className={`block text-[11px] ${point.stale ? "text-stale" : "text-slate-500"}`} title={new Date(point.observedAt).toLocaleString()}>
+      <span className={`block text-[11px] ${point.stale ? "text-stale" : "text-slate-500"}`}
+        title={`Observed ${new Date(point.observedAt).toLocaleString()} · retrieved ${new Date(point.retrievedAt).toLocaleString()}`}>
         {point.stale && "stale · "}{point.override && "override · "}{PRICE_KIND_LABEL[point.kind]} · {point.source} · {ago(point.observedAt)}
       </span>
     </>

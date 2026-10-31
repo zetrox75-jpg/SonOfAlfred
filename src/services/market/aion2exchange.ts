@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { itemKey } from "../../domain/validation/catalogue";
 import type { Statement } from "../catalogueStatements";
+import type { ProviderSource } from "./provider";
 
 // aion2.exchange ("Aion2Market API" 0.1.0) adapter. Pure: no network, no DB. The caller
 // injects `get`, so tests run on the saved fixtures in tests/fixtures/aion2exchange.
@@ -162,19 +163,26 @@ export function normalizePrices(res: z.output<typeof PricesResponse>, itemId: nu
   return out;
 }
 
+export const SOURCE: ProviderSource = {
+  name: PROVIDER.sourceName,
+  url: PROVIDER.homepage,
+  sourceType: "community",
+  notes: "Unofficial community API. No published terms of use (checked 2026-10-31).",
+};
+
 /** INSERT OR IGNORE: the unique observation index makes a repeated refresh store nothing twice. */
-export function observationStatements(marketId: number, obs: Observation[], retrievedAt: string): Statement[] {
+export function observationStatements(marketId: number, obs: Observation[], retrievedAt: string, source: ProviderSource = SOURCE): Statement[] {
   return [
     {
       sql: `INSERT INTO data_sources (name, url, source_type, terms_or_notes, is_authorized)
-            VALUES (?, ?, 'community', ?, 0) ON CONFLICT (name) DO NOTHING`,
-      params: [PROVIDER.sourceName, PROVIDER.homepage, "Unofficial community API. No published terms of use (checked 2026-10-31)."],
+            VALUES (?, ?, ?, ?, 0) ON CONFLICT (name) DO NOTHING`,
+      params: [source.name, source.url, source.sourceType, source.notes],
     },
     ...obs.map((o) => ({
       sql: `INSERT OR IGNORE INTO market_prices (item_id, market_id, price_kind, unit_price, quantity_observed, source_id,
               source_ref, observed_at, retrieved_at, raw_snapshot)
             VALUES (?, ?, 'lowest_listing', ?, ?, (SELECT id FROM data_sources WHERE name = ?), ?, ?, ?, ?)`,
-      params: [o.itemId, marketId, o.unitPrice, o.quantityObserved, PROVIDER.sourceName, o.sourceRef, o.observedAt, retrievedAt, o.raw],
+      params: [o.itemId, marketId, o.unitPrice, o.quantityObserved, source.name, o.sourceRef, o.observedAt, retrievedAt, o.raw],
     })),
   ];
 }
@@ -216,7 +224,7 @@ export function readStatus(value: string | undefined): ProviderStatus {
   }
 }
 
-export const statusStatement = (s: ProviderStatus): Statement => ({
+export const statusStatement = (s: ProviderStatus, key = STATUS_KEY): Statement => ({
   sql: "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
-  params: [STATUS_KEY, JSON.stringify(s)],
+  params: [key, JSON.stringify(s)],
 });
