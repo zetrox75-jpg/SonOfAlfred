@@ -62,9 +62,15 @@ and never called.
 - No known failing test or bug.
 - **Clean-install test: Deferred / Not yet verified.** Procedure: `docs/INSTALL.md`,
   "Clean-install test" (Windows Sandbox not enabled on this PC; enabling needs admin + reboot).
-- aion2.exchange: **permission unconfirmed** (no terms; robots.txt `use=reference` undefined; AI
-  agents disallowed, so an assistant must never fetch it). Adapter disabled by default; never run
-  live. `limit=1000` without pagination. Not modified in session 2.
+- aion2.exchange: **user-authorized (2026-10-31)**. The user relaxed README rule 6 and section
+  16.2/16.4: public, keyless, read-only community APIs are allowed with good-citizenship
+  constraints (honest User-Agent, rate limits, caching, attribution). Enable the adapter and make
+  it the default market provider; record known/unknown terms in `docs/DATA_SOURCES.md`; store
+  `units_sold`/`sold_avg_price` under a `community` label. AI assistants still must not fetch
+  the site themselves (robots.txt disallows AI agents) — only the app calls the API.
+  `limit=1000` without pagination. Also verified available: `GET /api/crafts?server={id}` —
+  19 Splendent craft targets per server with cost, market price, margin and success-rate
+  attempts, sourced from game files (AION2 5.3.2.0).
 - Not available: XLSX import; edit/delete UI for markets and sources; item archiving; nested
   categories; item icons; code signing; auto-update.
 - The real DB still contains 4 DEMO items and 2 DEMO recipes (fictional, region OTHER): Settings >
@@ -106,6 +112,11 @@ and never called.
 No AION 2 recipe, item or price data ships with the app; nothing is verified Global yet.
 Community recipe sites document no API, export or reuse permission (references only).
 Market: aion2.exchange adapter as above; others not used. Details: `docs/DATA_SOURCES.md`.
+2026-10-31 update: the user explicitly authorizes community data (aion2.exchange API, plus
+community craft data such as aion2-craft/gamers4.life) with `community` labels, per the relaxed
+README rules. KR/TW data still requires a separate, clearly labelled space.
+Pending user decision: Splendent crafts import — option A (import from `/api/crafts` with a
+button, recommended) vs option B (user-provided recipes).
 
 ## Next tasks, in priority order
 
@@ -129,8 +140,10 @@ Market: aion2.exchange adapter as above; others not used. Details: `docs/DATA_SO
    (in `src-tauri`) and compare with the results above. `npm run e2e` is safe (isolated data).
 6. Continue from the first unfinished priority (the deferred clean-install test, which needs the
    user) without recreating completed work. Do not mark step 5 done before it passes.
-7. Never fetch aion2.exchange (or any site that disallows AI agents) yourself; never enable the
-   provider on the user's behalf; do not modify the adapter unless asked.
+7. Do not fetch aion2.exchange (or any site that disallows AI agents) yourself with AI-agent
+   tooling; the app's own provider calls are now user-authorized and expected — enable and use
+   the aion2.exchange adapter (README rule 6 relaxed 2026-10-31), including `/api/crafts` for
+   the Splendent craft targets.
 8. Never test against the real database: use the `.e2e` identifier as in `scripts/e2e.mjs`.
 9. Communicate only in English (README 15.1), even if the user writes in another language, and
    keep following every requirement in the README.

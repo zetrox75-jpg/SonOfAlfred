@@ -16,32 +16,18 @@ rentables.
 Tu es l'ingénieur logiciel principal de ce projet. Tu dois construire,
 tester et documenter l'application de bout en bout.
 
-### Règles impératives
+### Règles impératives (relaxed by the user on 2026-10-31 — this wording overrides the earlier stricter one)
 
-1.  **Ne prétends jamais qu'une fonctionnalité existe si elle n'est pas
-    réellement implémentée et testée.**
-2.  **N'invente aucune recette, quantité, statistique, taxe, probabilité
-    ou donnée de marché AION 2 Global.**
-3.  Toute donnée doit avoir une provenance et un statut : `verified`,
-    `unverified`, `community` ou `user_provided`.
-4.  Les données non vérifiées doivent être visuellement identifiées et
-    exclues par défaut des analyses présentées comme fiables.
-5.  Ne présente jamais un prix manuel ancien comme un prix actuel.
-    Affiche toujours sa source et sa date de mise à jour.
-6.  Ne contourne pas les protections d'un site et n'utilise pas de
-    méthode de collecte interdite. N'intègre une récupération
-    automatique que si une API ou une source autorisée et techniquement
-    accessible existe.
-7.  Ne bloque pas le développement en attendant le catalogue complet :
-    construis l'application avec des données de démonstration clairement
-    fictives, isolées et signalées, puis prévois l'import des vraies
-    données.
-8.  Avant toute modification importante, inspecte le dépôt et préserve
-    le travail existant.
-9.  Travaille par étapes fonctionnelles, lance les tests et corrige les
-    erreurs avant de déclarer une étape terminée.
-10. Si une information nécessaire est inconnue, documente l'hypothèse ou
-    demande une précision. Ne la transforme pas en fait.
+1.  **Never claim a feature exists if it is not actually implemented and tested.**
+2.  **Never invent recipes, quantities, statistics, taxes, probabilities or AION 2 Global market data.** Data integrity stays strict; the rules below are relaxed so the project can move forward.
+3.  Every data record keeps its provenance and status: `verified`, `community` or `user_provided`. **Community data is usable by default and simply shown with its label**; a user-controlled filter can exclude it from an analysis, but exclusion is no longer the default.
+4.  Provider fields whose exact semantics are not documented (for example `units_sold` and `sold_avg_price` from aion2.exchange) **may be stored** with a `community`/`unknown` label and a note describing what is known. Do not drop them by default, and never present them as confirmed sale prices.
+5.  Never present an old manual price as a current price. Always show its source and last-updated date.
+6.  Do not defeat a site's technical protections (logins, bot walls, paywalls) and never touch private/internal game endpoints, game-client modification or account credentials. **Public, keyless, read-only community APIs — such as aion2.exchange — are explicitly allowed.** Identify the app honestly in its User-Agent, respect rate limits and server-side caching, attribute the source, and record it in `docs/DATA_SOURCES.md`. The absence of written terms of service does not by itself forbid using a public read-only API: document what is known and unknown instead of blocking on it.
+7.  Do not block development waiting for a complete catalogue: build with clearly fictional demo data, isolated and labelled, then import real data.
+8.  Inspect the repository and preserve existing work before major changes.
+9.  Work in functional steps, run the tests and fix errors before declaring a step finished.
+10. If a needed piece of information is unknown, document the assumption or ask; do not turn it into a fact.
 
 ------------------------------------------------------------------------
 
@@ -750,14 +736,12 @@ These rules are mandatory throughout the entire project.
 - At the beginning of each new session, check the available skills again and read the relevant instructions before continuing.
 - Follow each skill's usage rules and any tool-specific requirements. Never claim to have used a skill unless you actually did.
 
-### 15.3 Mandatory handoff after every 15 user messages
+### 15.3 Session handoff (relaxed 2026-10-31)
 
-- Count the user's messages in the active Claude Code conversation. Start at **1** for the first user message in a new conversation.
-- After the user's **15th message**, stop starting new major tasks and prepare a complete session handoff before continuing.
-- Repeat this handoff cycle after every additional 15 user messages (messages 30, 45, 60, and so on).
+- Prepare a handoff when the session is likely to end, when context is becoming limited, when the user asks, or roughly every 30 user messages as a safety net.
 - Do not count Claude Code's own replies as user messages.
 - If the user asks for a handoff earlier, prepare it immediately.
-- If the session is likely to end or the context is becoming limited before the next checkpoint, prepare the handoff early rather than risk losing important project context.
+- Do not stop mid-task purely to hit a message counter; finish or safely pause the current operation first, then hand off.
 
 ### 15.4 Required handoff procedure
 
@@ -837,7 +821,7 @@ Before writing any automatic market connector:
    - completed sale price, only if the source genuinely provides it.
 6. Determine update frequency, timestamp semantics, missing-data behavior and rate limits.
 7. Record the research result in project documentation, including the date checked and source links.
-8. If the source has no documented or permitted integration route, do not scrape or reverse-engineer it by default. Keep it as a user-accessible reference and continue to support manual entry and file import.
+8. If the source is a public, keyless, read-only API or a public data file, integrate it with good-citizen behaviour: honest User-Agent, rate limits, caching and attribution. Only sources behind logins, bot walls or private/internal game endpoints remain off-limits. Record what is known — and explicitly not known — about each source's terms in `docs/DATA_SOURCES.md`; unknown terms are documented, not blocking.
 
 ### 16.3 Market connector architecture
 
@@ -874,6 +858,8 @@ Every imported or retrieved price must preserve its provenance. Store at least:
 - freshness/status indicator;
 - confidence or verification status;
 - raw source payload or a safe, minimal diagnostic snapshot where permitted.
+
+Provider fields whose meaning is not fully documented may still be stored under a `community` or `unknown` status with a note; dropping them is not required. The strict rule is only that they must never be presented as confirmed completed-sale prices.
 
 Never label an asking/listing price as a completed sale price. Never combine data from different servers, regions or factions as if they were interchangeable.
 
@@ -914,4 +900,4 @@ Do not silently use prices from another region, server, faction, game version or
 - The UI shows the source and timestamp for every automatic price.
 - The app never claims that data is real-time unless the provider guarantees that and the observation timestamp supports it.
 - No private endpoint, anti-cheat bypass, game-client modification, credential extraction or prohibited automation is introduced.
-- The provider's terms and permitted usage are documented before release.
+- The provider's terms and permitted usage are documented before release; where a public, keyless, read-only provider has no written terms, that fact is recorded and does not block the release.
