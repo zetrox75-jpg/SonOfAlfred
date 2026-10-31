@@ -68,7 +68,9 @@ and never called.
   categories; item icons; code signing; auto-update.
 - The real DB still contains 4 DEMO items and 2 DEMO recipes (fictional, region OTHER): Settings >
   Demo / test data removes them.
-- Not a git repository: nothing is committed.
+- Git repository (branch `main`, no remote) since 2026-10-31; first commit `22e8094`. Ignored: build
+  output, `target-e2e`, `graphify-out`, and `src-tauri/aion2-cpm-*.json` (a JSON data export from an
+  earlier session's export test; kept on disk, not committed).
 - `src-tauri/target-e2e/` holds the isolated test build (safe to delete; `npm run e2e` rebuilds it).
 - A `tauri dev` instance on the real DB (ports 1420/9333) from an earlier session was running
   during this session and was left alone; it was no longer running at the end.
@@ -102,8 +104,7 @@ Market: aion2.exchange adapter as above; others not used. Details: `docs/DATA_SO
    Windows environment: `docs/INSTALL.md`, "Clean-install test". Record the result in
    `docs/PROJECT_STATUS.md`; mark step 5 done only if it passes.
 2. User check of the native Save/Open dialogs in Settings > Backup and restore.
-3. Offer `git init` and a first commit (user has not asked yet).
-4. Later features, only if the user asks: XLSX import, market/source editing, item archiving.
+3. Later features, only if the user asks: XLSX import, market/source editing, item archiving.
 
 ## Next session instructions
 

@@ -257,7 +257,7 @@ Unsigned installers: Windows SmartScreen may warn. WebView2: default `downloadBo
 - No item icons. Installers are not code-signed.
 - The 4 DEMO items and 2 DEMO recipes are still in the local database: remove them with
   Settings > Demo / test data.
-- Not a git repository yet.
+- Git repository (branch `main`, no remote) since 2026-10-31.
 
 ## Next
 
