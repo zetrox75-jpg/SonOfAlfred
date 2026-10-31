@@ -121,10 +121,17 @@ describe("price freshness", () => {
 });
 
 describe("region and verification", () => {
-  it("only verified Global data is reliable", () => {
+  it("verified and community Global data is reliable by default; KR/TW never", () => {
     expect(isReliable({ game_region: "GLOBAL", verification_status: "verified" })).toBe(true);
+    expect(isReliable({ game_region: "GLOBAL", verification_status: "community" })).toBe(true);
     expect(isReliable({ game_region: "KR", verification_status: "verified" })).toBe(false);
-    expect(isReliable({ game_region: "TW", verification_status: "verified" })).toBe(false);
-    expect(isReliable({ game_region: "GLOBAL", verification_status: "community" })).toBe(false);
+    expect(isReliable({ game_region: "TW", verification_status: "community" })).toBe(false);
+    expect(isReliable({ game_region: "GLOBAL", verification_status: "unverified" })).toBe(false);
+    expect(isReliable({ game_region: "GLOBAL", verification_status: "user_provided" })).toBe(false);
+  });
+
+  it("the per-analysis filter excludes community data", () => {
+    expect(isReliable({ game_region: "GLOBAL", verification_status: "community" }, false)).toBe(false);
+    expect(isReliable({ game_region: "GLOBAL", verification_status: "verified" }, false)).toBe(true);
   });
 });

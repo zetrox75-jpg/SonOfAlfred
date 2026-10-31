@@ -61,8 +61,10 @@ describe("normalization", () => {
       sourceRef: "aion2.exchange:item/516530001", raw: expect.stringContaining('"price":89000'),
     }]);
     expect(n.observations.length + n.unmatched + n.skipped).toBe(50);
-    // Sales statistics are never copied into an observation.
-    expect(n.observations[0].raw).not.toMatch(/sold/);
+    // Undocumented sales statistics are kept in the snapshot under a community label only;
+    // the observation itself stays a lowest listing.
+    expect(JSON.parse(n.observations[0].raw).community_unconfirmed).toMatchObject({ units_sold: 188832, sold_avg_price: 59983 });
+    expect(n.observations[0].unitPrice).toBe(89000);
   });
 
   it("only matches Global catalogue items", () => {
@@ -128,9 +130,9 @@ describe("refresh policy and status", () => {
     expect(canRefresh("2026-10-31T11:00:00Z", now)).toEqual({ allowed: true });
   });
 
-  it("is disabled until the user enables it", () => {
-    expect(readStatus(undefined).enabled).toBe(false);
-    expect(readStatus("not json").enabled).toBe(false);
+  it("is enabled by default (user-authorized 2026-10-31) and keeps a saved choice", () => {
+    expect(readStatus(undefined).enabled).toBe(true);
+    expect(readStatus('{"enabled":false}').enabled).toBe(false);
   });
 });
 
@@ -157,6 +159,12 @@ describe("storage", () => {
     const book = resolvePrices(rows, { buy: "lowest_listing", sell: "sale_price" }, new Date("2026-10-31T03:00:00Z"), 24);
     expect(book.buy.get(7)).toMatchObject({ unitPrice: 89000, tier: "provider" });
     expect(book.sell.get(7)).toBeUndefined();
+  });
+
+  it("records the source as user-authorized, also on a database created before the authorization", () => {
+    db.exec("INSERT INTO data_sources (name, source_type, is_authorized) VALUES ('aion2.exchange', 'community', 0)");
+    run(observationStatements(1, [], "2026-10-31T03:00:00Z"));
+    expect(db.prepare("SELECT is_authorized FROM data_sources WHERE name = 'aion2.exchange'").get()).toEqual({ is_authorized: 1 });
   });
 
   it("addMissing: creates listed items once (Global, community, provider source) and prices them", () => {

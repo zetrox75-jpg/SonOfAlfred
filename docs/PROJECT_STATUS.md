@@ -122,7 +122,7 @@ prices entered in Elyos were invisible in Asmodian. With sell method "completed 
 calculator used the 250 sale and ignored the 260 listing: total 290, net revenue 475, profit 185
 (same as step 3). A 3-day-old price lost to a fresh one.
 
-### aion2.exchange adapter (done, disabled by default)
+### aion2.exchange adapter (done; enabled by default since 2026-10-31)
 
 Investigation (2026-10-31): operator-published Swagger at `/api/docs` ("Aion2Market API" 0.1.0,
 "Read-only market data"); robots.txt allows `User-agent: *` with `Content-Signal: search=yes,
@@ -147,6 +147,13 @@ The AI assistant did not fetch the API; the user saved four responses in a brows
 real refresh happens only when the user enables the provider and presses a button. Until the
 operator confirms what `use=reference` allows, permission to use the API in this app remains
 unconfirmed (stated in the in-app notice).
+
+**Update 2026-10-31 (the table above records the earlier state):** the user authorized the API
+(README rule 6 relaxed). The provider is now enabled by default and is the default market
+provider; Settings can still disable it, and the notice says so. `units_sold` / `sold_avg_price`
+are kept in the raw snapshot under `community_unconfirmed`, never as sales. Provider actions run
+one at a time, so a refresh ending after "Disable" cannot re-enable it (test in
+`tests/marketRefresh.test.tsx`). Known and unknown terms: `docs/DATA_SOURCES.md`.
 
 ## Step 5: Windows finalisation (implemented; validation criterion Deferred / Not yet verified)
 
@@ -248,7 +255,7 @@ the retrieval time (hover: "Observed … · retrieved …", README 16.4).
 |--------|----------|
 | Finished and tested | Catalogue (search, filters, item sheet, add/edit, recipe archive); CSV import with preview and all-or-nothing write (items, recipes, prices, inventory); CSV and JSON export; calculation engine (chains, batches, stock, shared ingredients, alternatives, cycles, cash vs economic cost, profitability, break-even); calculator, crafting tree, buy-vs-craft; scanner; market prices with kinds, freshness, history chart; inventory; dashboard; demo data cleanup; backup / restore; backup before migrations; start-up and render error screens; end-to-end script |
 | Built, not fully verified | NSIS and MSI installers (**clean-install test Deferred / Not yet verified**); native error box for start failures (not triggered); native Save/Open dialogs of backup/restore (not driven by the assistant) |
-| Partial | aion2.exchange price adapter: implemented and tested offline, **disabled by default, permission unconfirmed, never run live**; no pagination beyond 1000 items |
+| Partial | aion2.exchange price adapter: default provider, enabled by default (user-authorized 2026-10-31); end-to-end validation with the user pending (MT-1); no pagination beyond 1000 items |
 | Not available | AION 2 Global recipe/item/price data (none verified, nothing shipped); XLSX import; edit/delete of markets and sources; item archiving; nested categories; item icons; code signing; auto-update |
 
 ## Known gaps and assumptions
@@ -258,7 +265,7 @@ the retrieval time (hover: "Observed … · retrieved …", README 16.4).
 - Buy/craft decisions use per-unit costs; batch rounding and stock are applied afterwards.
 - With cycles, the cost of an item can depend on the order items are visited (memoized).
 - Default buy and sell price methods are both "lowest active listing" until changed on the Market page.
-- aion2.exchange: permission unconfirmed (see above); never run against the live API yet.
+- aion2.exchange: user-authorized 2026-10-31; terms unknown (recorded in `docs/DATA_SOURCES.md`).
   `/api/items` is requested with `limit=1000` (957 items on the fixture date): if the API grows past
   1000 items, the refresh reports that only part was requested (no pagination yet).
   Items are matched to the catalogue by exact name (case/spacing ignored), Global items only.

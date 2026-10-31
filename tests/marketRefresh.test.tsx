@@ -135,3 +135,19 @@ it("opt-in: listed items missing from the catalogue are added (community) and pr
   expect(mock.fetchPrices).toHaveBeenCalledTimes(1); // mocks are cleared between tests
   expect(networkCalls).toEqual([]);
 }, 15_000);
+
+it("a disable pressed during a refresh is not undone when the refresh ends", async () => {
+  const { refreshMarket, setEnabled, loadStatus } = await import("../src/services/market/refresh");
+  let release: (() => void) | undefined;
+  registerProvider({ ...mock, id: "slow", fetchPrices: () => new Promise((r) => { release = () => r(Object.assign([], { note: "" })); }) });
+  const marketId = Number(db.prepare("INSERT INTO markets (name, region, server, faction, provider_server) VALUES ('MOCK Slow', 'Mock region', 'MOCK Slow', 'Asmodian', 'slow:1')").run().lastInsertRowid);
+  db.exec(`INSERT INTO settings (key, value) VALUES ('provider.slow', '{"enabled":true}')`);
+
+  const refreshing = refreshMarket({ id: marketId, name: "MOCK Slow", provider_server: "slow:1" });
+  const disabling = setEnabled(false, "slow");
+  await vi.waitFor(() => expect(release).toBeDefined());
+  release!();
+  await refreshing;
+  await disabling;
+  expect((await loadStatus("slow")).enabled).toBe(false);
+});

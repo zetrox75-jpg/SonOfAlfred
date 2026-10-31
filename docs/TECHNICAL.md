@@ -79,7 +79,7 @@ Query errors → per-page "Database error" box (`useAsync`). Messages name files
 
 `core:default`, `sql:default` (no execute), `dialog:allow-save`, `dialog:allow-open`,
 `fs:allow-write-text-file` (exports to the path the user picked), `http:default` limited to
-`https://aion2.exchange/api/*` (adapter disabled by default). Restore files are read by Rust, not
+`https://aion2.exchange/api/*` (adapter enabled by default; the user can disable it). Restore files are read by Rust, not
 by the frontend.
 
 ## Tests and checks

@@ -25,6 +25,7 @@ import itemsTemplate from "../../../data/templates/items.csv?raw";
 import recipesTemplate from "../../../data/templates/recipes.csv?raw";
 import demoItems from "../../../data/templates/demo/demo_items.csv?raw";
 import demoRecipes from "../../../data/templates/demo/demo_recipes.csv?raw";
+import { CraftingGraph, craftingGraphStatements, GRAPH_SOURCE, type GraphImport, type Race } from "../../services/craftingGraph";
 
 type Kind = "items" | "recipes" | "prices" | "inventory";
 const KIND_LABEL: Record<Kind, string> = { items: "Items", recipes: "Recipes", prices: "Prices", inventory: "Inventory" };
@@ -194,6 +195,7 @@ export default function ImportExportPage() {
               </Button>
             </div>
           </Card>
+          <GraphImportCard />
           <Card title="Not available yet">
             <p className="text-sm text-slate-500">XLSX import (save as CSV from Excel instead), SQLite backup and restore (step 5).</p>
           </Card>
@@ -275,4 +277,76 @@ function catalogPreview<T>(file: string, headers: string[], rows: Preview["rows"
       return `Imported ${file}: ${n("create")} created, ${n("update")} updated, ${changes.length - todo.length} unchanged.`;
     },
   };
+}
+
+/** gamers4.life crafting graph (JSON saved by the user): one race at a time, summary, then one write. */
+function GraphImportCard() {
+  const [race, setRace] = useState<Race | "">("");
+  const [plan, setPlan] = useState<(GraphImport & { file: string }) | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onFile(file: File | undefined) {
+    setPlan(null);
+    setMsg(null);
+    if (!file || !race) return;
+    try {
+      const parsed = CraftingGraph.safeParse(JSON.parse(await file.text()));
+      if (!parsed.success) {
+        const i = parsed.error.issues[0];
+        throw new Error(`Not a gamers4.life crafting graph (${i.path.join(".") || "root"}: ${i.message}).`);
+      }
+      setPlan({ ...craftingGraphStatements(parsed.data, race, new Date().toISOString()), file: file.name });
+    } catch (e) {
+      setMsg({ ok: false, text: `Nothing was written. ${errMsg(e)}` });
+    }
+  }
+
+  async function write() {
+    if (!plan) return;
+    setBusy(true);
+    try {
+      await writeTransaction(plan.statements);
+      setMsg({ ok: true, text: `${plan.recipes} recipe(s) imported from ${GRAPH_SOURCE.name} (Global, community, ${race === "dark" ? "Asmodian" : "Elyos"}).` });
+      setPlan(null);
+    } catch (e) {
+      setMsg({ ok: false, text: `Nothing was written. ${errMsg(e)}` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title="Import crafting graph (gamers4.life JSON)">
+      <p className="mb-3 text-sm text-slate-400">
+        Profession recipes from the file you saved from {GRAPH_SOURCE.url}. Read locally, no network. Recipes are Global with status
+        community (region not stated by the source); quantities and craft fees come from the file. Re-importing updates the same recipes
+        and keeps a craft fee you changed.
+      </p>
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <select aria-label="Race" className="rounded border border-night-600 bg-night-950 px-2 py-1" value={race}
+          onChange={(e) => { setRace(e.target.value as Race | ""); setPlan(null); }}>
+          <option value="">Race of your market...</option>
+          <option value="dark">Asmodian</option>
+          <option value="light">Elyos</option>
+        </select>
+        <input key={race + String(msg?.ok)} type="file" accept=".json,application/json" aria-label="Crafting graph file" disabled={!race}
+          className="text-sm file:mr-3 file:rounded file:border-0 file:bg-night-700 file:px-3 file:py-1.5 file:text-slate-200"
+          onChange={(e) => onFile(e.target.files?.[0])} />
+      </div>
+      {plan && (
+        <div className="mt-3 space-y-2 text-sm">
+          <p>
+            <strong>{plan.file}</strong>: {plan.recipes} recipe(s) to write; {plan.noInputs} without ingredients skipped;
+            {" "}{plan.mergedNames} item name(s) shared by several game variants, merged.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setPlan(null)}>Cancel</Button>
+            <Button variant="primary" disabled={busy || plan.recipes === 0} onClick={write}>{busy ? "Writing..." : `Write ${plan.recipes} recipe(s)`}</Button>
+          </div>
+        </div>
+      )}
+      {msg && <p role="status" className={`mt-3 text-sm ${msg.ok ? "text-profit" : "text-loss"}`}>{msg.text}</p>}
+    </Card>
+  );
 }

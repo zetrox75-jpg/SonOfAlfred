@@ -1,5 +1,5 @@
 import type { PlanRecipe, PricePoint } from "../domain/calculations/craftPlan";
-import { PriceKind } from "../domain/models";
+import { isReliable, PriceKind } from "../domain/models";
 import { isStale } from "../domain/calculations/profit";
 import type { Statement } from "./catalogueStatements";
 
@@ -39,7 +39,8 @@ export const toPlanRecipe = (r: PlanRecipeRow): PlanRecipe => ({
   outputItemId: r.output_item_id,
   outputQuantity: r.output_quantity,
   craftFee: r.craft_fee,
-  reliable: r.verification_status === "verified" && r.game_region === "GLOBAL",
+  reliable: isReliable(r),
+  verified: isReliable(r, false),
   ingredients: JSON.parse(r.ingredients_json),
 });
 

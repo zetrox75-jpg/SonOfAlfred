@@ -8,7 +8,7 @@ export const getDb = () => (db ??= Database.load(DB_URL));
 
 export interface DashboardStats {
   recipes: number;
-  verifiedGlobalRecipes: number;
+  reliableGlobalRecipes: number;
   nonGlobalRecipes: number;
   pricedItems: number;
   priceObservations: number;
@@ -20,7 +20,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     SELECT
       (SELECT COUNT(*) FROM recipes WHERE archived_at IS NULL) AS recipes,
       (SELECT COUNT(*) FROM recipes WHERE archived_at IS NULL
-         AND verification_status = 'verified' AND game_region = 'GLOBAL') AS verifiedGlobalRecipes,
+         AND verification_status IN ('verified', 'community') AND game_region = 'GLOBAL') AS reliableGlobalRecipes,
       (SELECT COUNT(*) FROM recipes WHERE archived_at IS NULL AND game_region <> 'GLOBAL') AS nonGlobalRecipes,
       (SELECT COUNT(DISTINCT item_id) FROM market_prices) AS pricedItems,
       (SELECT COUNT(*) FROM market_prices) AS priceObservations,

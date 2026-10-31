@@ -16,7 +16,7 @@ function Kpi({ label, value, hint }: { label: string; value: string | number; hi
 
 function alerts(s: DashboardStats): string[] {
   const out: string[] = [];
-  if (s.recipes > 0 && s.verifiedGlobalRecipes === 0) out.push("No recipe is verified for AION 2 Global yet: no result can be marked reliable.");
+  if (s.recipes > 0 && s.reliableGlobalRecipes === 0) out.push("No Global recipe is verified or community-sourced yet: no result can be marked reliable.");
   if (s.nonGlobalRecipes > 0) out.push(`${s.nonGlobalRecipes} recipe(s) come from a non-Global region (KR/TW/other). They are excluded from reliable analyses.`);
   if (s.recipes > 0 && s.priceObservations === 0) out.push("No market price recorded: costs and profits cannot be computed.");
   return out;
@@ -33,7 +33,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
             <Kpi label="Recipes" value={q.data.recipes} hint="Active (not archived)" />
-            <Kpi label="Verified Global" value={q.data.verifiedGlobalRecipes} hint="Status verified, region Global" />
+            <Kpi label="Reliable Global" value={q.data.reliableGlobalRecipes} hint="Status verified or community, region Global" />
             <Kpi label="Items with a price" value={q.data.pricedItems} hint={`${q.data.priceObservations} observation(s)`} />
             <Kpi
               label="Last price update"

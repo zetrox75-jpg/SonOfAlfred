@@ -115,8 +115,15 @@ Market: aion2.exchange adapter as above; others not used. Details: `docs/DATA_SO
 2026-10-31 update: the user explicitly authorizes community data (aion2.exchange API, plus
 community craft data such as aion2-craft/gamers4.life) with `community` labels, per the relaxed
 README rules. KR/TW data still requires a separate, clearly labelled space.
-Pending user decision: Splendent crafts import — option A (import from `/api/crafts` with a
-button, recommended) vs option B (user-provided recipes).
+Splendent crafts: the user chose option A. `/api/crafts` has no ingredients, so the import uses
+`/api/crafts/model?server={id}` ("Import Splendent crafts" button): 19 Global community recipes,
+expected quantities rounded up (user's choice over fractional quantities), craft fee NULL.
+Fixture `tests/fixtures/aion2exchange/crafts-model.json`, tests `tests/crafts.test.ts`. Pressed
+by the user in the `.e2e` app on 2026-10-31: 19 Kromede recipes written.
+Profession recipes: gamers4.life crafting graph, imported from a file the user saves (Import /
+Export > "Import crafting graph"), one race at a time; 745 Asmodian recipes with inputs. Fixture
+`tests/fixtures/gamers4life/`, tests `tests/craftingGraph.test.ts`. Details and unknowns in
+`docs/DATA_SOURCES.md`.
 
 ## Next tasks, in priority order
 

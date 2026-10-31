@@ -37,8 +37,10 @@ Keys: Alt+1 … Alt+9 open menu entries 1–9, Alt+0 opens Settings.
 
 - **Incomplete**: a price, a fee (`craft_fee` empty means unknown, write 0 for none) or the
   commission is missing. Totals are not shown as zero; the missing items are listed.
-- **Not reliable**: a price is older than the freshness limit, or a recipe is not verified
-  Global. Only reliable results appear on the Dashboard.
+- **Not reliable**: a price is older than the freshness limit, or a recipe is not Global with
+  status verified or community. Community data counts as reliable by default and keeps its label;
+  tick **Verified Global recipes only** (Calculator or Profit Scanner) to exclude it from that
+  analysis. Only reliable results appear on the Dashboard.
 - **Price kinds**: a listing is an asking price, not a completed sale. The calculator uses only
   the kind you selected; it never substitutes another kind. Order: your override, then fresh before
   stale, then provider > manual > import.
@@ -46,9 +48,21 @@ Keys: Alt+1 … Alt+9 open menu entries 1–9, Alt+0 opens Settings.
 
 ## Market provider (aion2.exchange)
 
-Disabled by default. Its permission to be used by this app is **not confirmed** (see the notice in
-Settings). If you enable it, refreshes happen only when you press a button, at most once per hour
-per request, and prices are stored as "lowest active listing".
+Enabled by default: you authorized this public, read-only community API on 2026-10-31. Disable it
+in Settings at any time. Refreshes happen only when you press a button, at most once per hour
+per request, and prices are stored as "lowest active listing", never as sales.
+
+**Profession recipes**: save `https://gamers4.life/aion-2/database/crafting-graph.json` from your
+browser, then Import / Export > **Import crafting graph**: pick the race of your market, choose the
+file, check the summary, then **Write**. Recipes are Global `community` with the fee and
+quantities of the file. The Profit scanner then ranks every recipe whose materials and result have
+a price on the selected market.
+
+**Import Splendent crafts** (Market page, aion2.exchange markets) adds one recipe per Artisan's
+Splendent item for that server's race: Global, status `community`, quantities = the model's
+expected materials rounded up to whole units, craft fee empty (unknown). Results stay
+"incomplete" until you enter the craft fee (0 if there is none) in the recipe. Re-importing
+updates the quantities and keeps the fee you entered. At most once per hour per server.
 
 Tick **Also add listed items missing from my catalogue** before *Refresh prices* to build a full
 price list for that server in one refresh: every listed item with a price is added as a Global item

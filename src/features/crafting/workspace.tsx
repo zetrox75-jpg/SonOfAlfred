@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button, ErrorBox, inputCls, Loading, useAsync } from "../../components/ui";
-import { buildCraftPlan, PlanError, type CraftPlan, type Strategy, type Valuation } from "../../domain/calculations/craftPlan";
+import { buildCraftPlan, PlanError, verifiedOnly, type CraftPlan, type Strategy, type Valuation } from "../../domain/calculations/craftPlan";
 import { loadWorkspace, type Workspace } from "../../services/plan";
 import { addManualPrice, PRICE_KIND_LABEL, saveSettings, type ResolvedPrice } from "../../services/planQueries";
 import { writeTransaction } from "../../services/catalogue";
@@ -13,6 +13,8 @@ interface PlanChoices {
   quantity: number;
   valuation: Valuation;
   useInventory: boolean;
+  /** Per-analysis filter: community recipes stop counting as reliable. */
+  verifiedOnly: boolean;
   strategies: Map<number, Strategy>;
   recipeChoice: Map<number, number>;
   /** Item opened in Market / History. */
@@ -33,7 +35,7 @@ const WorkspaceCtx = createContext<Ctx | null>(null);
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const ws = useAsync(loadWorkspace);
   const [choices, setChoices] = useState<PlanChoices>({
-    targetItemId: null, quantity: 1, valuation: "cash", useInventory: true, strategies: new Map(), recipeChoice: new Map(), focusItemId: null,
+    targetItemId: null, quantity: 1, valuation: "cash", useInventory: true, verifiedOnly: false, strategies: new Map(), recipeChoice: new Map(), focusItemId: null,
   });
   const data = ws.state === "ok" ? ws.data : null;
 
@@ -44,7 +46,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         plan: buildCraftPlan({
           targetItemId: choices.targetItemId,
           quantity: choices.quantity,
-          recipesByOutput: data.recipesByOutput,
+          recipesByOutput: choices.verifiedOnly ? verifiedOnly(data.recipesByOutput) : data.recipesByOutput,
           buyPrice: (id) => data.prices.buy.get(id),
           inventory: data.inventory,
           useInventory: choices.useInventory,
@@ -149,6 +151,9 @@ export function PlanControls({ data }: { data: Workspace }) {
         </fieldset>
         <label className="flex items-center gap-2 pb-2 text-sm text-slate-300">
           <input type="checkbox" checked={choices.useInventory} onChange={(e) => set("useInventory", e.target.checked)} /> Use my inventory
+        </label>
+        <label className="flex items-center gap-2 pb-2 text-sm text-slate-300" title="Community recipes count as reliable by default">
+          <input type="checkbox" checked={choices.verifiedOnly} onChange={(e) => set("verifiedOnly", e.target.checked)} /> Verified Global recipes only
         </label>
       </div>
       {!data.market && <p className="text-sm text-stale">No market selected: every price is missing. Create a market in Settings, then pick it here.</p>}

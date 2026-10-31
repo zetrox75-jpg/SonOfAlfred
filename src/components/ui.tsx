@@ -65,7 +65,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 const STATUS_HINT: Record<string, string> = {
   verified: "Checked against a reliable source",
-  community: "From a community source, not independently verified",
+  community: "From a community source, not independently verified. Counted as reliable unless you filter it out",
   user_provided: "Entered by you",
   unverified: "Not verified: excluded from reliable analyses",
 };

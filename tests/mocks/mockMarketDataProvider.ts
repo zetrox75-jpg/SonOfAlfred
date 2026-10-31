@@ -18,7 +18,7 @@ if (fixture._fixture !== true || fixture._source !== "mock") throw new Error("mo
 export function createMockMarketDataProvider(now = Date.now()) {
   const provider: MarketDataProvider = {
     id: "mock",
-    source: { name: "MOCK provider (fictional test data)", url: "https://example.invalid/mock", sourceType: "community", notes: "Test fixture, not real data." },
+    source: { name: "MOCK provider (fictional test data)", url: "https://example.invalid/mock", sourceType: "community", notes: "Test fixture, not real data.", authorized: false },
     capabilities: { priceKinds: ["lowest_listing"], history: false },
     fetchPrices: vi.fn(async ({ catalogue, addMissing }) => {
       const prices: NormalizedPrice[] = [];

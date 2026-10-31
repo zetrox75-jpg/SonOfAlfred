@@ -8,8 +8,8 @@ The automated test (`tests/marketRefresh.test.tsx`) covers the same flow with a 
 fictional data. This manual test checks the real provider end to end.
 
 **Why manual:** aion2.exchange's robots.txt blocks AI agents (`Claude-User`, `ClaudeBot`), and
-README rule 6 forbids getting around a site's rules. Its usage permission is also **unconfirmed**
-(see Settings notice and `docs/DATA_SOURCES.md`). Only the human operator may press the buttons
+README rule 6 forbids getting around a site's rules. The user authorized the app's own calls on
+2026-10-31 (see `docs/DATA_SOURCES.md`), but only the human operator may press the buttons
 that contact it. No script may click "Refresh prices", open aion2.exchange, or fake a browser
 user agent.
 
@@ -19,7 +19,7 @@ user agent.
 - The app is built from the current source (`npm run tauri build`) or started with `npm run tauri dev`.
 - Some **GLOBAL** catalogue items exist whose names match the provider's names exactly
   (for example, import `data/live-test/aion2exchange_global_items.csv`).
-- The operator has read the provider notice in Settings and accepts that permission is unconfirmed.
+- The operator has read the provider notice in Settings (enabled by default, user-authorized 2026-10-31).
 - A backup was taken first (Settings > Backup and restore > Back up now…).
 
 ### Steps

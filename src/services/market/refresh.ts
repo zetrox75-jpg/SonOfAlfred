@@ -4,6 +4,8 @@ import { writeTransaction } from "../catalogue";
 import { itemKey } from "../../domain/validation/catalogue";
 import {
   canRefresh,
+  CraftModelResponse,
+  craftRecipeStatements,
   ItemsResponse,
   keyFromSourceRef,
   normalizeItems,
@@ -38,10 +40,19 @@ export async function loadStatus(providerId = AION2EXCHANGE): Promise<ProviderSt
 
 const saveStatus = (s: ProviderStatus, providerId = AION2EXCHANGE) => writeTransaction([statusStatement(s, statusKeyOf(providerId))]);
 
-export async function setEnabled(enabled: boolean): Promise<void> {
-  const s = await loadStatus();
-  await saveStatus({ ...s, enabled, acknowledgedAt: enabled ? new Date().toISOString() : s.acknowledgedAt });
-}
+// Every provider action reads the whole status row and writes it back, so they run one at a time:
+// otherwise a refresh that ends after a "disable" would write `enabled: true` back.
+let queue: Promise<unknown> = Promise.resolve();
+const serial = <T>(f: () => Promise<T>): Promise<T> => {
+  const r = queue.then(f);
+  queue = r.catch(() => {});
+  return r;
+};
+
+export const setEnabled = (enabled: boolean, providerId = AION2EXCHANGE): Promise<void> => serial(async () => {
+  const s = await loadStatus(providerId);
+  await saveStatus({ ...s, enabled, acknowledgedAt: enabled ? new Date().toISOString() : s.acknowledgedAt }, providerId);
+});
 
 async function getJson(url: string): Promise<unknown> {
   let res: Response;
@@ -66,7 +77,11 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 /** Guards, request, and status bookkeeping shared by every provider action. */
-async function guarded<T>(cacheKey: string, action: () => Promise<{ result: T; summary: string; statements?: Parameters<typeof writeTransaction>[0] }>, providerId = AION2EXCHANGE): Promise<T> {
+function guarded<T>(cacheKey: string, action: () => Promise<{ result: T; summary: string; statements?: Parameters<typeof writeTransaction>[0] }>, providerId = AION2EXCHANGE): Promise<T> {
+  return serial(() => guardedNow(cacheKey, action, providerId));
+}
+
+async function guardedNow<T>(cacheKey: string, action: () => Promise<{ result: T; summary: string; statements?: Parameters<typeof writeTransaction>[0] }>, providerId: string): Promise<T> {
   const status = await loadStatus(providerId);
   if (!status.enabled) throw new Error(`The ${providerId} provider is disabled. Enable it in Settings after reading the notice.`);
   const check = canRefresh(status.refreshedAt[cacheKey] ?? null, new Date());
@@ -141,6 +156,17 @@ export async function refreshMarket(market: { id: number; name: string; provider
     const summary = `${market.name}: ${prices.length} catalogue item(s) priced from ${provider.source.name}. ${prices.note ?? ""}`.trim();
     return { result: summary, summary, statements: observationStatements(market.id, prices, new Date().toISOString(), provider.source) };
   }, provider.id);
+}
+
+/** Splendent craft recipes of this market's server (race), as Global community recipes. */
+export async function importCrafts(market: { provider_server: string | null }): Promise<string> {
+  const serverId = serverIdOf(market.provider_server);
+  return guarded(`crafts:${serverId}`, async () => {
+    const res = parse(CraftModelResponse, await getJson(urls.craftsModel(serverId)), "crafts model");
+    const { statements, recipes, skipped } = craftRecipeStatements(res, new Date().toISOString());
+    const summary = `${recipes} Splendent recipe(s) imported from ${SOURCE.name} (community, quantities rounded up, craft fee unknown)${skipped ? `; ${skipped} without a name skipped` : ""}.`;
+    return { result: summary, summary, statements };
+  });
 }
 
 /** 7-day cheapest-listing history of one item, into this market only. */

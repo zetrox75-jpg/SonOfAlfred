@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button, Card, EmptyState, inputCls, PageHeader, RegionBadge } from "../../components/ui";
+import { verifiedOnly } from "../../domain/calculations/craftPlan";
 import { scanProfits, type ScanRow } from "../../domain/calculations/scanner";
 import type { Workspace } from "../../services/plan";
 import { PRICE_KIND_LABEL } from "../../services/planQueries";
@@ -30,14 +31,14 @@ function Scanner({ data, onNavigate }: { data: Workspace; onNavigate: (id: strin
   const rows = useMemo(() => scanProfits({
     targets: [...data.recipesByOutput.keys()].filter((id) => data.items.has(id)),
     quantity,
-    recipesByOutput: data.recipesByOutput,
+    recipesByOutput: f.verifiedOnly ? verifiedOnly(data.recipesByOutput) : data.recipesByOutput,
     buyPrice: (id) => data.prices.buy.get(id),
     sellPrice: (id) => data.prices.sell.get(id),
     inventory: data.inventory,
     useInventory,
     commissionBps: data.settings.commissionBps,
     valuation: choices.valuation,
-  }), [data, quantity, useInventory, choices.valuation]);
+  }), [data, quantity, useInventory, choices.valuation, f.verifiedOnly]);
 
   if (data.recipes.length === 0) return <EmptyState title="No recipe in the catalogue">Import or create recipes first.</EmptyState>;
 

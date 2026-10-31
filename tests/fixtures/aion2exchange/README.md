@@ -12,6 +12,8 @@ agents (`Claude-User`, `ClaudeBot` and others) while allowing `User-agent: *`.
 | `openapi.json` | `GET /api/openapi.json` | Valid JSON. "Aion2Market API" 0.1.0, "Read-only market data". No license, contact or terms of service. |
 | `servers.json` | `GET /api/servers` | Valid JSON. 106 servers (`server_id`, `name`, `region` NAE/NAW/EU/LA/AS, `faction` Elyos/Asmodian, `has_data`); `default: 11304`. |
 | `items.json` | `GET /api/items?sort=name&order=asc&window=24h&...` | Valid JSON. 50 of 957 items (`limit: 50`). **Server not recorded in the response.** Presumed the default server 11304 (see below), unconfirmed. |
+| `crafts.json` | `GET /api/crafts?server=11304` | Valid JSON. 19 Splendent targets (Elyos / Light) with the API's own cost, market price, margin and expected attempts; **no ingredients**, so it is not imported. Saved 2026-10-31 by the user. |
+| `crafts-model.json` | `GET /api/crafts/model?server=12316` | Valid JSON. Kromede (Asmodian / Dark): 11 profiles covering the 19 targets, 3 steps each with success rate, expected attempts and materials per attempt (game files AION2 5.3.2.0). Source of the Splendent recipe import. Saved 2026-10-31 by the user. |
 | `item-prices.json` | `GET /api/items/516530001/prices?server=11304&range=7d` | Valid JSON, matches the `PriceSeries` schema: item 516530001 "Amplify Stone (Unique)", 168 hourly points from 2026-10-24T03:00Z to 2026-10-31T02:00Z, every point has all required `PricePoint` fields. |
 
 Consistency: the last price point (89000 at 02:00Z) equals the `price` captured for the same

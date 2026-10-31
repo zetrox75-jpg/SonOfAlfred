@@ -5,8 +5,11 @@ Last checked: **2026-10-31**.
 **The application ships with no AION 2 recipe, item or price data.** Every
 record must come from an import or manual entry with a source, a verification
 status (`verified`, `unverified`, `community`, `user_provided`) and a game
-region (`GLOBAL`, `KR`, `TW`, `OTHER`). Only `verified` + `GLOBAL` data is
-treated as reliable (`isReliable` in `src/domain/models`).
+region (`GLOBAL`, `KR`, `TW`, `OTHER`). `GLOBAL` data with status `verified` or
+`community` is treated as reliable by default (`isReliable` in `src/domain/models`, README
+rule 3 relaxed 2026-10-31); the "Verified Global recipes only" filter on the Calculator and
+the Profit Scanner excludes community recipes from one analysis. The status label stays
+visible everywhere. KR/TW data is never reliable for Global.
 
 ## Recipe data: research result
 
@@ -38,15 +41,75 @@ client-traffic collectors must not be used.
 
 | Source | Status in the app | Why |
 |--------|-------------------|-----|
-| aion2.exchange (Aion2Market) JSON API | **adapter built, disabled by default** | Checked 2026-10-31: operator-published Swagger UI at `/api/docs`; robots.txt allows `User-agent: *` (`Content-Signal: search=yes, ai-train=no, use=reference`) but disallows AI agents, so the assistant never fetched it; no terms page found (404). **Permission for this app is unconfirmed**: the user must review the operator's conditions and enable it explicitly. Prices are cheapest active listings per Global server (`lowest_listing`). Fixtures saved by the user: `tests/fixtures/aion2exchange/`. Rate limits are not documented; the app makes at most one request per endpoint per hour (API cache). |
+| aion2.exchange (Aion2Market) JSON API | **default market provider, enabled by default** (user-authorized 2026-10-31, README rule 6 relaxed) | See "aion2.exchange: known and unknown" below. |
 | aion2.market, a2-tracker.com | reference only | No documented public API. |
 | aion2craft.com Supabase table | not used | Korean coverage, community-typed data: not Global. |
 | dimkk/aion2-market-stack | not used | Reads the game client's market traffic: excluded by README 16.7. |
+
+### aion2.exchange: known and unknown (checked 2026-10-31)
+
+Known:
+- Operator-published Swagger UI at `/api/docs` ("Aion2Market API" 0.1.0, "Read-only market
+  data"). Public, keyless, read-only JSON.
+- robots.txt allows `User-agent: *` with `Content-Signal: search=yes, ai-train=no,
+  use=reference`, and disallows AI agents. An AI assistant therefore never fetches the site; only
+  the desktop app calls the API, on the user's button press.
+- Responses are cached by Cloudflare for an hour (`max-age=3600`). The app asks at most once per
+  hour per server (or per item history) and sends `limit=1000` without pagination.
+- The app identifies itself as `AION2-Craft-Profit-Manager/0.1.0 (desktop app; user-initiated
+  refresh)`. Every price shows the source "aion2.exchange" and its observation time.
+- `price` (and `/prices` points) are the cheapest active listing per Global server: stored as
+  `lowest_listing`, never as a sale.
+- `units_sold`, `sold_avg_price` and `stats_registered` are kept in each observation's raw
+  snapshot under `community_unconfirmed`, with a note. They are never used or shown as a sale
+  price.
+
+- `/api/crafts/model?server={id}` lists, per Splendent profile, the steps with materials per
+  attempt and the expected number of attempts (the operator's model, sourced from game files
+  AION2 5.3.2.0). "Import Splendent crafts" turns it into one Global `community` recipe per
+  target: quantity = per attempt x expected attempts summed over steps, **rounded up** to whole
+  units (recipe note: "expected quantities from the aion2.exchange model, rounded up"). The craft
+  fee is not in the model and stays unknown (empty). Morph/conversion routes are not imported.
+
+Not known:
+- How the crafts model derives expected attempts (success rate and combo probability are given,
+  the formula is not documented); whether NPC craft fees apply.
+- No terms of use or terms page (404). What `use=reference` allows is not defined.
+- No documented rate limit.
+- The meaning of the `sold_*` fields (no description in the API schema).
+- How long the API stays available, or whether it changes without notice (the app rejects an
+  unexpected response and stores nothing).
+
+The user authorized its use on 2026-10-31 as a public, keyless, read-only API. Unknown terms are
+recorded here and do not block its use (README 16.2, relaxed).
 
 Prices today are typed by the user per market (source `Manual entry`) or
 imported from CSV (a source of type `import`), stored as append-only
 observations with their kind (listing, sale, estimate...). Any future provider writes into the
 same store with its own source, so the calculator does not change.
+
+## Profession recipes: gamers4.life crafting graph
+
+Authorized by the user on 2026-10-31 as community data. The app does not fetch it: the user saves
+`https://gamers4.life/aion-2/database/crafting-graph.json` and imports the file (Import / Export >
+"Import crafting graph"). Source row: `gamers4.life crafting graph`, `community`, authorized.
+
+Known: 2,442 recipes (blacksmithing, jewelcrafting, tailoring, alchemy, cooking), one set per race,
+whole-number quantities, output count, fee in Kinah, mastery level; item keys identical to
+aion2.exchange, so refreshed prices match by name.
+
+How it is mapped:
+- Only the chosen race is imported (Asmodian = `dark`, Elyos = `light`), as Global `community`
+  recipes, key `gamers4.life:<recipe id>`, fee and mastery as given.
+- Recipes without inputs are skipped and counted.
+- "Kina (All)" listed as an input is added to the fee (it is the currency, not an item).
+- Same-name variants (different item keys, same name) become one catalogue item with alternative
+  recipes, because the market and the catalogue identify items by name. The calculator picks the
+  cheapest recipe it can price.
+- Ignored: the combo chance and combo item (profit uses the normal result), the third input field.
+
+Not known: the region (not stated; English names match aion2.exchange Global items), the game
+version, licence or terms, how the data is collected, whether a fee of 0 means "no fee".
 
 ## Rules
 

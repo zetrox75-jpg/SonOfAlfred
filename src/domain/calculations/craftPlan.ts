@@ -17,10 +17,16 @@ export interface PlanRecipe {
   outputItemId: number;
   outputQuantity: number;
   craftFee: number | null;
-  /** verified + GLOBAL */
+  /** GLOBAL and verified or community (isReliable) */
   reliable: boolean;
+  /** GLOBAL and verified */
+  verified: boolean;
   ingredients: { itemId: number; quantity: number }[];
 }
+
+/** The per-analysis "verified Global recipes only" filter: community recipes stop counting as reliable. */
+export const verifiedOnly = (byOutput: Map<number, PlanRecipe[]>) =>
+  new Map([...byOutput].map(([id, rs]) => [id, rs.map((r) => ({ ...r, reliable: r.verified }))]));
 
 export interface PricePoint {
   unitPrice: number;

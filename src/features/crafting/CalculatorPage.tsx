@@ -36,11 +36,11 @@ function Issues({ data, plan }: { data: Workspace; plan: CraftPlan }) {
     plan.missingRecipes.length && `No usable recipe for: ${plan.missingRecipes.map(name).join(", ")} (forced craft or cycle).`,
     plan.unknownFeeRecipes.length && `Unknown craft fee in recipe: ${plan.unknownFeeRecipes.map(rkey).join(", ")}.`,
     plan.stalePrices.length && `Stale price: ${plan.stalePrices.map(name).join(", ")}.`,
-    plan.unreliableRecipes.length && `Recipe not verified for Global: ${plan.unreliableRecipes.map(rkey).join(", ")}.`,
+    plan.unreliableRecipes.length && `Recipe not reliable for Global (not verified or community, or the "verified only" filter is on): ${plan.unreliableRecipes.map(rkey).join(", ")}.`,
     plan.cycles.length && `Recipe cycle skipped: ${plan.cycles.map((c) => c.map(name).join(" → ")).join("; ")}.`,
   ].filter(Boolean) as string[];
   return plan.reliable ? (
-    <p className="rounded border border-profit/40 bg-profit/10 p-3 text-sm text-profit">Reliable: complete, fresh prices, verified Global recipes.</p>
+    <p className="rounded border border-profit/40 bg-profit/10 p-3 text-sm text-profit">Reliable: complete, fresh prices, Global recipes (verified or community).</p>
   ) : (
     <div role="alert" className="rounded border border-stale/40 bg-stale/10 p-3 text-sm text-stale">
       <p className="font-semibold">Not a reliable result</p>

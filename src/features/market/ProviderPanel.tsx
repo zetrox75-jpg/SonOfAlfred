@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button, Card, ErrorBox, Loading, useAsync } from "../../components/ui";
 import type { Workspace } from "../../services/plan";
 import { PROVIDER, canRefresh, type ProviderServer } from "../../services/market/aion2exchange";
-import { AION2EXCHANGE, createMarketForServer, fetchServers, loadHistory, loadStatus, refreshMarket, setEnabled } from "../../services/market/refresh";
+import { AION2EXCHANGE, createMarketForServer, fetchServers, importCrafts, loadHistory, loadStatus, refreshMarket, setEnabled } from "../../services/market/refresh";
 import { providerById } from "../../services/market/provider";
 import { useWorkspace } from "../crafting/workspace";
 
@@ -24,10 +24,10 @@ export function ProviderSettingsCard() {
       {q.state === "ok" && (
         <div className="space-y-3 text-sm">
           <div className="rounded border border-stale/40 bg-stale/10 p-3 text-stale">
-            <p className="font-semibold">Unofficial source. Review its conditions before enabling.</p>
+            <p className="font-semibold">Unofficial community source, enabled by default (user-authorized 2026-10-31).</p>
             <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs">
               <li>aion2.exchange is a community service, not NCSOFT. It publishes no terms of use (checked 2026-10-31).</li>
-              <li>Its robots.txt allows general clients but sets <code>use=reference</code>, whose meaning is not defined. Permission to use it in this app is <strong>not confirmed</strong>; check with the operator.</li>
+              <li>Its robots.txt allows general clients but sets <code>use=reference</code>, whose meaning is not defined. You authorized its use as a public, keyless, read-only API (README rule 6, relaxed 2026-10-31). Disable it here at any time.</li>
               <li>Prices are the <strong>cheapest active listings</strong> per server, never completed sales.</li>
               <li>When enabled, the app sends only GET requests to {PROVIDER.base}/servers, /items and /items/&#123;id&#125;/prices, only when you press a button, at most once per hour per request, identifying itself as “{PROVIDER.userAgent}”.</li>
             </ul>
@@ -46,7 +46,7 @@ export function ProviderSettingsCard() {
             <div className="flex flex-wrap items-center justify-end gap-3">
               <label className="mr-auto flex items-center gap-2 text-xs text-slate-300">
                 <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />
-                I have reviewed the operator's usage conditions and accept that permission is unconfirmed.
+                I have read this notice.
               </label>
               <Button variant="primary" disabled={!ack} onClick={() => toggle(true)}>Enable</Button>
             </div>
@@ -91,11 +91,12 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
   const linked = new Set(data.markets.map((m) => m.provider_server).filter(Boolean));
   const serverId = market?.provider_server?.match(/(\d+)$/)?.[1];
   const next = serverId ? canRefresh(s.refreshedAt[`items:${serverId}`] ?? null, new Date()) : null;
+  const craftsNext = serverId ? canRefresh(s.refreshedAt[`crafts:${serverId}`] ?? null, new Date()) : null;
 
   return (
     <Card title={`Automatic prices: ${source?.name ?? providerId}${source?.sourceType === "official" ? "" : " (unofficial)"}`}>
       {!s.enabled ? (
-        <p className="text-sm text-slate-400">Disabled. Read the notice and enable it in Settings. Manual entry and CSV import keep working without it.</p>
+        <p className="text-sm text-slate-400">Disabled in Settings. Enable it there to refresh prices. Manual entry and CSV import keep working without it.</p>
       ) : (
         <div className="space-y-3 text-sm">
           {market?.provider_server ? (
@@ -109,6 +110,12 @@ export function ProviderMarketCard({ data }: { data: Workspace }) {
                 <input type="checkbox" checked={addMissing} onChange={(e) => setAddMissing(e.target.checked)} /> Also add listed items missing from my catalogue
               </label>
               {next && !next.allowed && <span className="text-xs text-slate-500">cached; next refresh after {new Date(next.nextAt).toLocaleTimeString()}</span>}
+              {providerId === AION2EXCHANGE && (
+                <Button disabled={busy || (craftsNext !== null && !craftsNext.allowed)} onClick={() => run(() => importCrafts(market))}
+                  title="Splendent craft recipes of this server's race, from the aion2.exchange crafts model: Global, community, expected quantities rounded up, craft fee unknown.">
+                  Import Splendent crafts
+                </Button>
+              )}
             </div>
           ) : (
             <p className="text-slate-400">{market ? `“${market.name}” is not linked to a server: it only holds manual and imported prices.` : "No market selected."}</p>

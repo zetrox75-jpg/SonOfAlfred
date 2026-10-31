@@ -55,6 +55,7 @@ export const Recipe = z.object({
 export type Recipe = z.infer<typeof Recipe>;
 
 
-/** Only verified Global data is presented as reliable. */
-export const isReliable = (d: { game_region: GameRegion; verification_status: VerificationStatus }) =>
-  d.game_region === "GLOBAL" && d.verification_status === "verified";
+/** Global data that is verified, or community-sourced (README rule 3, relaxed 2026-10-31), counts
+ * as reliable; `includeCommunity: false` is the per-analysis filter. KR/TW never count. */
+export const isReliable = (d: { game_region: string; verification_status: string }, includeCommunity = true) =>
+  d.game_region === "GLOBAL" && (d.verification_status === "verified" || (includeCommunity && d.verification_status === "community"));

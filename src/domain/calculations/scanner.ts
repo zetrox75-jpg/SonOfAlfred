@@ -1,7 +1,7 @@
 import { buildCraftPlan, PlanError, profitability, type PlanInput, type PricePoint, type Valuation } from "./craftPlan";
 
 // Profit scanner (README 4.6): every craftable item through the crafting engine.
-// A result is only "reliable" when complete, fresh and built on verified Global recipes;
+// A result is only "reliable" when complete, fresh and built on reliable Global recipes;
 // incomplete results are returned with their reasons and never ranked as opportunities.
 
 export type ScanStatus = "reliable" | "unreliable" | "incomplete";
@@ -56,7 +56,7 @@ export function scanProfits(input: ScanInput): ScanRow[] {
     const incomplete = issues.length > 0 || p.status === "incomplete";
     if (plan.stalePrices.length) issues.push(`${plan.stalePrices.length} stale buy price(s)`);
     if (base.sellPrice?.stale) issues.push("stale sell price");
-    if (plan.unreliableRecipes.length) issues.push("recipe not verified for Global");
+    if (plan.unreliableRecipes.length) issues.push("recipe not reliable for Global");
 
     const used = [...plan.lines.filter((l) => l.toBuy > 0 && l.buyPrice).map((l) => l.buyPrice!.observedAt), ...(base.sellPrice ? [base.sellPrice.observedAt] : [])];
     const done = p.status === "complete" ? p : null;

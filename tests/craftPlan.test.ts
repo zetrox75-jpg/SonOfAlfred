@@ -1,6 +1,6 @@
 // FICTIONAL TEST DATA: ids, recipes and prices are invented to check the math.
 import { describe, expect, it } from "vitest";
-import { buildCraftPlan, PlanError, profitability, type PlanInput, type PlanRecipe, type PricePoint } from "../src/domain/calculations/craftPlan";
+import { buildCraftPlan, PlanError, profitability, verifiedOnly, type PlanInput, type PlanRecipe, type PricePoint } from "../src/domain/calculations/craftPlan";
 
 const ORE = 1, LEATHER = 2, INGOT = 3, SWORD = 4, HANDLE = 5, COAL = 6, SWORD2 = 7, X = 8, Y = 9, Z = 10;
 
@@ -145,6 +145,15 @@ describe("missing and unreliable data", () => {
     expect(plan.unreliableRecipes).toEqual([SWORD_R.id]);
     expect(plan.reliable).toBe(false);
     expect(plan.totals.cash).toBe(280);
+  });
+
+  it("the verified-only filter makes a community recipe unreliable for that analysis", () => {
+    const community = { ...SWORD_R, reliable: true, verified: false };
+    const base = input({ recipes: [{ ...INGOT_A, verified: true }, community] });
+    expect(buildCraftPlan(base).unreliableRecipes).toEqual([]);
+    const strict = buildCraftPlan({ ...base, recipesByOutput: verifiedOnly(base.recipesByOutput) });
+    expect(strict.unreliableRecipes).toEqual([SWORD_R.id]);
+    expect(strict.totals.cash).toBe(280);
   });
 
   it("forced craft without recipe is reported", () => {

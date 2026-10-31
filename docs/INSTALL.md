@@ -110,8 +110,9 @@ message names the backup taken just before.
 - Installers are not code-signed; no auto-update.
 - No AION 2 Global recipe, item or price data is shipped; nothing is verified Global yet
   (`docs/DATA_SOURCES.md`). Data is imported by the user (CSV templates in `data/templates/`).
-- Automatic prices: only the optional aion2.exchange adapter, **disabled by default, permission
-  unconfirmed**, listings only (never completed sales), at most 1000 items per request.
+- Automatic prices: only the aion2.exchange adapter (community source, enabled by default,
+  user-authorized 2026-10-31; can be disabled in Settings), listings only (never completed
+  sales), at most 1000 items per request.
 - XLSX is not read (save as CSV UTF-8). No edit/delete screens for markets and sources, no item
   archiving, flat categories, no item icons.
 - In-game commission rounding is unknown: revenue is rounded down.

@@ -124,8 +124,8 @@ describe("recipes for the planner", () => {
              INSERT INTO recipe_ingredients (recipe_id, ingredient_item_id, quantity) VALUES (1, 1, 3), (2, 1, 4);`);
     const recipes = all<Parameters<typeof toPlanRecipe>[0]>(PLAN_RECIPES_SQL).map(toPlanRecipe);
     expect(recipes).toEqual([
-      { id: 1, key: "k1", outputItemId: 2, outputQuantity: 2, craftFee: 10, reliable: true, ingredients: [{ itemId: 1, quantity: 3 }] },
-      { id: 2, key: "k2", outputItemId: 2, outputQuantity: 1, craftFee: null, reliable: false, ingredients: [{ itemId: 1, quantity: 4 }] },
+      { id: 1, key: "k1", outputItemId: 2, outputQuantity: 2, craftFee: 10, reliable: true, verified: true, ingredients: [{ itemId: 1, quantity: 3 }] },
+      { id: 2, key: "k2", outputItemId: 2, outputQuantity: 1, craftFee: null, reliable: true, verified: false, ingredients: [{ itemId: 1, quantity: 4 }] },
     ]);
   });
 });

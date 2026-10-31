@@ -13,6 +13,8 @@ export interface ProviderSource {
   url: string;
   sourceType: "official" | "community";
   notes: string;
+  /** `data_sources.is_authorized`: the user explicitly authorized this source. */
+  authorized: boolean;
 }
 
 /** What the provider is asked for: one exact server of one market, and the catalogue to match. */
