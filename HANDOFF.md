@@ -8,10 +8,11 @@ Updated 2026-10-31 at the end of the third session. Describes the real repositor
 
 Windows desktop app (Tauri 2 + React 19 + TypeScript + SQLite) to manage and analyse crafting
 profitability for **AION 2 Global**: recipe catalogue, market prices, full crafting chains,
-inventory, profitability. Product specification: `README.md` (authoritative; identical copy of
-`README_AION2_Craft_Profit_Manager.md`; never rewrite it). On 2026-10-31 the user relaxed rules 3,
-4 and 6 and sections 15.3, 16.2, 16.4 and 16.7 (marked "relaxed 2026-10-31" in the README, commit
-`b46e7c1`); `README.md` was synced to that wording in this handoff.
+inventory, profitability. Product specification: `docs/SPEC.md` (authoritative; moved verbatim
+from the former root `README.md` on 2026-11-05, when the repository was restructured — see
+"Repository restructure (2026-11-05)" below; never rewrite it). On 2026-10-31 the user relaxed
+rules 3, 4 and 6 and sections 15.3, 16.2, 16.4 and 16.7 (marked "relaxed 2026-10-31" in the
+spec, commit `b46e7c1`); the spec was synced to that wording in the 2026-10-31 handoff.
 
 ## Phase
 
@@ -141,6 +142,24 @@ Details, known and unknown terms: `docs/DATA_SOURCES.md`.
   `npm run item-data`. Icons go to git-ignored `public/icons/` (game art, never published); run
   the script before building on a new machine, or items show letter tiles.
 - Other recipe sites: references only. KR/TW data must stay in its own labelled space.
+
+## Repository restructure (2026-11-05)
+
+Documentation-only restructure (no application code touched), ordered by the user:
+
+- The authoritative spec moved verbatim from the root `README.md` to `docs/SPEC.md`; the
+  duplicate root copy `README_AION2_Craft_Profit_Manager.md` was removed. The root
+  `README.md` is now a normal project README pointing to the spec.
+- `AGENTS.md` (work rules for AI coding agents, extracted from spec sections 1, 15, 16)
+  and `CLAUDE.md` (pointer) were added.
+- GitHub community files were added under `.github/`: `CONTRIBUTING.md`,
+  `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, issue templates
+  (bug report, feature request), a PR template with a data-integrity checklist, and a CI
+  workflow (`ci.yml`: `tsc --noEmit`, `vitest run`, `cargo test --lib`, clippy).
+- Folder READMEs were added: `docs/`, `src/`, `src-tauri/`, `data/`, `tests/`,
+  `scripts/`.
+- This handoff, `docs/PROJECT_STATUS.md` and `docs/TECHNICAL.md` were updated to point
+  at `docs/SPEC.md`.
 
 ## Next tasks, in priority order
 

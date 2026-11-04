@@ -1,0 +1,50 @@
+name: Feature request
+description: Suggest an improvement or a new feature
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that the app does not support well today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What should the app do instead? How should it behave with missing or community data?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other workarounds, spreadsheets, websites or tools you use today.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Dashboard
+        - Catalogue
+        - Craft calculator
+        - Crafting tree
+        - Profit scanner
+        - Market / prices
+        - Inventory
+        - History
+        - Import / export
+        - Settings / backup
+        - Data / providers
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: spec
+    attributes:
+      label: Spec check
+      description: Feature requests are validated against docs/SPEC.md — the authoritative product specification.
+      options:
+        - label: I have read docs/SPEC.md and this request does not contradict it (e.g. no invented game data, no private-endpoint integrations).
+          required: true
