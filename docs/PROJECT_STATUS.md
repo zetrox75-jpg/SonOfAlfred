@@ -1,7 +1,7 @@
 # Project status
 
-`README.md` is the product specification. It is a copy of
-`README_AION2_Craft_Profit_Manager.md`; re-copy it when that file changes.
+`docs/SPEC.md` is the authoritative product specification (moved there verbatim from the
+former root `README.md` on 2026-11-05; the duplicate root copy was removed). Never rewrite it.
 Last synced 2026-10-31 (includes section 16, market data).
 This file tracks progress against the section 10 build plan.
 

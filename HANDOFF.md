@@ -7,10 +7,11 @@ latest commit on `main`, pushed to `https://github.com/zetrox75-jpg/SonOfAlfred`
 
 Windows desktop app (Tauri 2 + React 19 + TypeScript + SQLite) to manage and analyse crafting
 profitability for **AION 2 Global**: recipe catalogue, market prices, full crafting chains,
-inventory, profitability. Product specification: `README.md` (authoritative; identical copy of
-`README_AION2_Craft_Profit_Manager.md`; never rewrite it). On 2026-10-31 the user relaxed rules 3,
-4 and 6 and sections 15.3, 16.2, 16.4 and 16.7 (marked "relaxed 2026-10-31" in the README, commit
-`b46e7c1`); `README.md` was synced to that wording in this handoff.
+inventory, profitability. Product specification: `docs/SPEC.md` (authoritative; moved verbatim
+from the former root `README.md` on 2026-11-05, when the repository was restructured — see
+"Repository restructure (2026-11-05)" below; never rewrite it). On 2026-10-31 the user relaxed
+rules 3, 4 and 6 and sections 15.3, 16.2, 16.4 and 16.7 (marked "relaxed 2026-10-31" in the
+spec, commit `b46e7c1`); the spec was synced to that wording in the 2026-10-31 handoff.
 
 ## Phase
 

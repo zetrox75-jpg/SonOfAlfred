@@ -1,6 +1,6 @@
 # Technical documentation
 
-Specification: `README.md` (authoritative). Progress: `docs/PROJECT_STATUS.md`. Session state:
+Specification: `docs/SPEC.md` (authoritative). Progress: `docs/PROJECT_STATUS.md`. Session state:
 `HANDOFF.md`. Data provenance: `docs/DATA_SOURCES.md`.
 
 ## Stack

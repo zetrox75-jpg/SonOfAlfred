@@ -1,0 +1,56 @@
+name: Bug report
+description: Something is broken or behaves incorrectly
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect instead?
+      placeholder: |
+        Steps to reproduce:
+        1. ...
+        2. ...
+
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "0.1.0 (see Settings or the installer file name)"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11 23H2 x64"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Dashboard
+        - Catalogue
+        - Craft calculator
+        - Crafting tree
+        - Profit scanner
+        - Market / prices
+        - Inventory
+        - History
+        - Import / export
+        - Settings / backup
+        - Installation / startup
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Error text, screenshots, or what you were importing at the time. Do NOT paste your full database or personal data.
