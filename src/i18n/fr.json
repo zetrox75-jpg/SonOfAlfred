@@ -454,5 +454,11 @@
   "Stale price: {list}.": "Prix périmé : {list}.",
   "Recipe not reliable for Global (not verified or community, or the \"verified only\" filter is on): {list}.": "Recette non fiable pour Global (ni vérifiée ni communautaire, ou le filtre « vérifiées uniquement » est actif) : {list}.",
   "Recipe cycle skipped: {list}.": "Cycle de recettes ignoré : {list}.",
-  "{item}: required, from stock and still to buy are shown per item below.": "{item} : requis, depuis le stock et reste à acheter sont indiqués par objet ci-dessous."
+  "{item}: required, from stock and still to buy are shown per item below.": "{item} : requis, depuis le stock et reste à acheter sont indiqués par objet ci-dessous.",
+  "Version {version} is available.": "La version {version} est disponible.",
+  "Update now": "Mettre à jour",
+  "Later": "Plus tard",
+  "Installing update…": "Installation de la mise à jour…",
+  "The update failed: {error}": "La mise à jour a échoué : {error}",
+  "The app restarts by itself. Your data is kept.": "L'application redémarre toute seule. Vos données sont conservées."
 }

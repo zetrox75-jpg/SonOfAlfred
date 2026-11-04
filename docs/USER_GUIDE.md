@@ -62,8 +62,12 @@ a price on the selected market.
 names are shown in French too when a translation exists (hover a name to see the English one).
 Search boxes accept both languages.
 
-Item icons appear next to item names (tables, crafting tree, search suggestions). They are part of
-the app (no internet needed); an item without an icon shows a letter tile.
+Item icons appear next to item names (tables, crafting tree, search suggestions). They load from
+gamers4.life when shown and are cached for about 7 days; offline, an uncached icon shows a letter
+tile.
+
+**Updates**: at start-up the app checks for a new version. Click **Update now** on the banner: it
+downloads, verifies the signature, installs and restarts. Your data is kept.
 
 **Import Splendent crafts** (Market page, aion2.exchange markets) adds one recipe per Artisan's
 Splendent item for that server's race: Global, status `community`, quantities = the model's

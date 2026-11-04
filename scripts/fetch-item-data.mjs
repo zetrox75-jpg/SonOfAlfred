@@ -1,22 +1,18 @@
-// Downloads item names (French) and item icons for local display.
-// Usage: npm run item-data            (add -- --dry-run to only count what would be downloaded)
+// Refreshes the French item names and the item -> icon list.
+// Usage: npm run item-data            (add -- --dry-run to only print the counts)
 //
 // Source: gamers4.life (robots.txt allows all agents; checked 2026-10-31). Its item list page
 // embeds every item as {"id","name","icon",...,"isGlobalAvailable"} (Taiwan-only items, flagged false, are skipped): one request per language.
 // Writes, both committed:
 //   src/data/itemNamesFr.json  normalized English name -> French name
 //   src/data/itemIcons.json    normalized English name -> icon file ("ETC/Icon_X")
-// and downloads the icons of Global items into public/icons/ (game art: git ignores that folder,
-// so it is bundled into the user's build but never published). Polite: 4 requests at a time,
-// honest User-Agent, files already present are skipped.
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+// Icons are game art: the app loads them from gamers4.life when shown, nothing is bundled.
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const DRY = process.argv.includes("--dry-run");
 const ROOT = join(import.meta.dirname, "..");
 const UA = "AION2-Craft-Profit-Manager/0.1.0 (desktop app; one-time item data download)";
-const ICON_BASE = "https://gamers4.life/aion-2/database/icons/assets/Game/UI/Resource/Texture/Item/";
-const OUT_ICONS = join(ROOT, "public", "icons");
 
 // Same rule as normalizeName in src/domain/validation/catalogue.ts.
 const norm = (s) => s.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
@@ -57,30 +53,8 @@ for (const [id, e] of en) {
   if (file && e.global && !(k in icons)) icons[k] = file;
 }
 const sorted = (o) => Object.fromEntries(Object.entries(o).sort());
-const files = [...new Set(Object.values(icons))];
-const todo = files.filter((f) => !existsSync(join(OUT_ICONS, `${f}.webp`)));
-console.log(`items en ${en.size} / fr ${fr.size}; French names ${Object.keys(names).length}; Global items with an icon ${Object.keys(icons).length}; icon files ${files.length}, to download ${todo.length}`);
+console.log(`items en ${en.size} / fr ${fr.size}; French names ${Object.keys(names).length}; Global items with an icon ${Object.keys(icons).length}`);
 if (DRY) process.exit(0);
 
 writeFileSync(join(ROOT, "src", "data", "itemNamesFr.json"), JSON.stringify(sorted(names)) + "\n");
 writeFileSync(join(ROOT, "src", "data", "itemIcons.json"), JSON.stringify(sorted(icons)) + "\n");
-
-let done = 0, failed = 0;
-async function worker() {
-  while (todo.length) {
-    const f = todo.shift();
-    try {
-      const res = await fetch(`${ICON_BASE}${f}.webp`, { headers: { "User-Agent": UA } });
-      if (!res.ok || !String(res.headers.get("content-type")).startsWith("image/")) throw new Error(`HTTP ${res.status}`);
-      const dest = join(OUT_ICONS, `${f}.webp`);
-      mkdirSync(dirname(dest), { recursive: true });
-      writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
-      if (++done % 250 === 0) console.log(`  ${done} downloaded...`);
-    } catch (e) {
-      failed++;
-      if (failed <= 20) console.warn(`skip ${f}: ${e.message}`);
-    }
-  }
-}
-await Promise.all(Array.from({ length: 4 }, worker));
-console.log(`icons downloaded ${done}, failed ${failed}`);

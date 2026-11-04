@@ -5,14 +5,15 @@ import NAMES_FR from "../data/itemNamesFr.json";
 import { lang } from "../i18n";
 import { inputCls } from "./ui";
 
-// Item icons: game art downloaded once by `npm run item-data` into public/icons (not in git), found
-// by item name through src/data/itemIcons.json. No network at run time. An item without an icon,
-// or a build made before the download, gets a letter tile.
+// Item icons: game art, never bundled or published. Found by item name through
+// src/data/itemIcons.json, loaded from gamers4.life when shown, and kept by the webview's HTTP
+// cache (the site sends max-age=604800). An item without an icon, or offline, gets a letter tile.
+const ICON_BASE = "https://gamers4.life/aion-2/database/icons/assets/Game/UI/Resource/Texture/Item/";
 
 const FILES = ICONS as Record<string, string>;
 export const iconFor = (name: string): string | null => {
   const f = FILES[normalizeName(name)];
-  return f ? `/icons/${f}.webp` : null;
+  return f ? `${ICON_BASE}${f}.webp` : null;
 };
 
 const FR = NAMES_FR as Record<string, string>;

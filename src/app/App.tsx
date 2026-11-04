@@ -11,6 +11,7 @@ import MarketPage from "../features/market/MarketPage";
 import HistoryPage from "../features/market/HistoryPage";
 import ScannerPage from "../features/scanner/ScannerPage";
 import { lang, setLang, tr } from "../i18n";
+import { UpdateBanner } from "./UpdateBanner";
 
 
 interface NavEntry {
@@ -104,6 +105,7 @@ export default function App({ upgradeBackup }: { upgradeBackup: string | null })
       </nav>
 
       <main className="flex-1 overflow-y-auto px-8 py-6">
+        <UpdateBanner />
         {upgradeBackup && (
           <p role="status" className="mb-4 rounded border border-frost-400/40 p-3 text-sm text-frost-300 break-all">
             {tr("The database was upgraded. A backup taken just before is at")} <span className="font-mono">{upgradeBackup}</span>.

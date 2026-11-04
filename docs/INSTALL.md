@@ -104,6 +104,18 @@ message names the backup taken just before.
 | SmartScreen blocks the installer | Unsigned build, see Install step 2. |
 | Profit shows "incomplete" | Not an error: a price, fee or commission is missing. The message lists what. |
 
+## Publishing an update
+
+1. In a normal terminal (PowerShell blocks plain `npm`): `npm.cmd run release -- 0.1.2`
+2. Commit and push the version change.
+3. On GitHub, create a release tagged `v0.1.2` and upload **every** file from
+   `src-tauri/target/release/bundle/upload/` (two installers and `latest.json`).
+
+Installed copies then offer the update at start-up. The update must be signed with
+`~/.tauri/aion2-craft-profit-manager.key`. **Back that key up privately and never commit it:** if
+it is lost, installed copies cannot update and must reinstall by hand. A version without the
+updater (0.1.0) must install the next version by hand once.
+
 ## Known limitations
 
 - Clean-install validation of both installers: **Deferred / Not yet verified**.

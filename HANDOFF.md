@@ -1,8 +1,7 @@
 # HANDOFF — AION 2 Craft Profit Manager
 
-Updated 2026-10-31 at the end of the third session. Describes the real repository state at commit
-`f14be67` plus this handoff commit (both on `main`, pushed to
-`https://github.com/zetrox75-jpg/SonOfAlfred`).
+Updated 2026-11-05 at the end of the third session. Describes the real repository state at the
+latest commit on `main`, pushed to `https://github.com/zetrox75-jpg/SonOfAlfred`. App version 0.1.1.
 
 ## Project
 
@@ -47,15 +46,24 @@ Isolated test app: identifier `com.aion2.craftprofitmanager.e2e`, data in
 `%APPDATA%\com.aion2.craftprofitmanager.e2e\` (holds the session 3 live test data until the next
 `npm run e2e`, which deletes it).
 
-## Tested (exact commands and results, 2026-10-31, session 3)
+## Interface added at the end of session 3
+
+AION 2 theme (bundled Cinzel font, `src/styles/index.css`); `ItemName` and `ItemPicker` with icons
+(`src/components/item.tsx`); EN/FR switch and `tr()` (`src/i18n.ts`, `src/i18n/fr.json`, coverage
+test `tests/i18n.test.ts`); French item names (`src/data/itemNamesFr.json`); update banner
+(`src/app/UpdateBanner.tsx`). Status messages built in services (import results, provider errors)
+are still English. Seen in the `.e2e` app only by the user.
+
+## Tested (exact commands and results, 2026-11-05, session 3)
 
 ```bash
 npx tsc --noEmit                             # exit 0
-npx vitest run                               # 12 files, 121 tests passed
+npx vitest run                               # 13 files, 122 tests passed
 cd src-tauri && cargo test --lib             # 4 passed, 0 failed
 cd src-tauri && cargo clippy --all-targets   # finished, no warnings
-npm run e2e                                  # 8/8 PASS (run before the two importers; not rerun so
-                                             # the .e2e live test data is kept)
+npm run e2e                                  # 8/8 PASS on 2026-10-31, before the importers, theme,
+                                             # French and updater; not rerun (keeps .e2e test data)
+node scripts/release.mjs 0.1.1               # exit 0: signed NSIS 4.3 MB, MSI 5.9 MB, latest.json
 ```
 
 The isolated `.e2e` app was rebuilt with
@@ -137,13 +145,23 @@ Details, known and unknown terms: `docs/DATA_SOURCES.md`.
   user saves responses as fixtures.
 - **gamers4.life crafting graph** (user-authorized as community data): profession recipes, read
   from a file the user saved.
-- **gamers4.life item list** (robots.txt allows all agents): French item names and item icons via
-  `npm run item-data`. Icons go to git-ignored `public/icons/` (game art, never published); run
-  the script before building on a new machine, or items show letter tiles.
+- **gamers4.life item list** (robots.txt allows all agents): French item names and the icon list
+  via `npm run item-data`. Icons are loaded from gamers4.life when shown (webview cache 7 days);
+  nothing is bundled or published, so installers can go on public GitHub Releases.
 - Other recipe sites: references only. KR/TW data must stay in its own labelled space.
+
+## App updates
+
+Tauri updater: `npm.cmd run release -- <x.y.z>`, then upload `bundle/upload/` to GitHub release
+`v<x.y.z>` (`docs/INSTALL.md`, "Publishing an update"). Endpoint:
+`releases/latest/download/latest.json`. Private key outside the repo:
+`~/.tauri/aion2-craft-profit-manager.key` (no password). 0.1.1 is the first version with the updater;
+a real update from 0.1.1 to a later version has not been tested yet.
 
 ## Next tasks, in priority order
 
+0. Publish v0.1.1: GitHub release with all files of `src-tauri/target/release/bundle/upload/`, then
+   install it once by hand (0.1.0 has no updater) and prove the updater with a later version.
 1. With the user: set the commission (Settings), then check the Profit Scanner screen in the
    `.e2e` app (or the real app after a backup) and report the profitable recipes.
 2. Resolve the empty `units_sold` (browser check above); adjust the parser only if the live field
@@ -176,4 +194,4 @@ Details, known and unknown terms: `docs/DATA_SOURCES.md`.
    keep following every requirement in the README.
 
 **First action:** run `git log --oneline -5` and `git status`, then the checks in step 5, then ask
-the user for the commission rate (task 1).
+the user whether release v0.1.1 is published (task 0).
