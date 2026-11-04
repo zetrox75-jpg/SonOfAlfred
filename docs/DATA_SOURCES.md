@@ -117,10 +117,10 @@ version, licence or terms, how the data is collected, whether a fee of 0 means "
 game id, name, icon path and Global flag; Taiwan-only items are skipped. Output:
 - `src/data/itemNamesFr.json` (committed): normalized English name -> French name (8,051).
 - `src/data/itemIcons.json` (committed): normalized English name -> icon file (6,385 items).
-- `public/icons/` (**git-ignored**): the icon files, downloaded once from
-  `https://gamers4.life/aion-2/database/icons/assets/Game/UI/Resource/Texture/Item/<file>.webp`
-  (2,360 files, about 41 MB; 116 were not found). Icons are game art: bundled into the user's own
-  build, never published in the repository. The app makes no request for them at run time.
+Icons are game art and are **never bundled or published**. The app loads each one when shown from
+`https://gamers4.life/aion-2/database/icons/assets/Game/UI/Resource/Texture/Item/<file>.webp`
+(CSP `img-src` adds only that host); the webview's HTTP cache keeps it (`max-age=604800`, 7 days).
+Offline, an uncached icon shows a letter tile. 116 listed icon files do not exist on the site.
 English names stay the key for prices, recipes and icons; French is display and search only.
 
 ## Rules
