@@ -310,6 +310,15 @@ files, 130 tests passed; `cargo test --lib` 4 passed; `cargo clippy --all-target
 switch as if it were a menu entry, reloading the window; it now clicks `nav ul button` only). The
 run covers a fresh database at v6 and the render of all 10 pages, not the three new interactions.
 
+Real-window check on 2026-11-11 in the isolated `.e2e` app (one-off CDP script, fictional UITEST
+items in region OTHER, data deleted afterwards), 10/10 PASS: Scanner "Items to buy" 1 without
+stock and 0 with "Craftable now"; "Mark plan as crafted" changed stock 9 ore -> 3, +1 ingot
+surplus, +1 sword and logged cost 70 / estimated profit 215; a sale of 1 x 280 at 5% showed net
+revenue 266 and real profit 196. Not checked: French labels, the delete button, incomplete-cost rows.
+
+CI (2026-11-11): both jobs had failed on every run since the workflow was added. The workflow now
+uses Node 26 and runs the backend job on `windows-latest`; first green run on commit `ab0eb94`.
+
 ## Features: finished, partial, not available (README 12)
 
 | Status | Features |

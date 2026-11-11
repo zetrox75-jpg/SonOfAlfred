@@ -55,7 +55,7 @@ test `tests/i18n.test.ts`); French item names (`src/data/itemNamesFr.json`); upd
 (`src/app/UpdateBanner.tsx`). Status messages built in services (import results, provider errors)
 are still English. Seen in the `.e2e` app only by the user.
 
-## Added 2026-11-10 (committed on branch `feat/craft-log-stock-scanner`, not pushed, not merged)
+## Added 2026-11-10 (PR #2, branch `feat/craft-log-stock-scanner`, merged into `main` 2026-11-11)
 
 "Mark plan as crafted" on the Inventory page ("Current plan" card): after crafting in game, one
 confirmed click removes the stock the plan used, keeps batch surplus and adds the crafted output.
@@ -88,8 +88,21 @@ every `nav button`, including the EN/FR switch (added in session 3), which reloa
 Selector fixed to `nav ul button` in `scripts/e2e.mjs`; rerun **8/8 PASS** (fresh database
 migrated to v6, all 10 pages render, backup, persistence, restore). The run deleted the `.e2e`
 test data, including the session 3 live data. e2e does not press "Mark plan as crafted", the
-Scanner filter or the craft log sale entry: **those interactions are still unseen in a real
-window**. The user asked about reading game network
+Scanner filter or the craft log sale entry.
+
+Real-window check on 2026-11-11 in the isolated `.e2e` app (one-off CDP script, fictional UITEST
+items in region OTHER, data deleted afterwards), 10/10 PASS: Scanner "Items to buy" showed 1
+without stock and 0 with "Craftable now" (which ticked "Use my inventory"); opening the item from
+the Scanner, then "Mark plan as crafted" and its confirm step, changed stock 9 ore -> 3, +1 ingot
+surplus, +1 sword and wrote one log row (cost 70, estimated profit 215); typing a sale of 1 x 280
+at 5% showed net revenue 266 and real profit 196. Not checked: French labels, the delete button,
+incomplete-cost rows.
+
+CI: both jobs had failed on every run since the workflow was added (Node 22 could not resolve
+`node:sqlite` for the jsdom test; Ubuntu lacked the GTK libraries). `.github/workflows/ci.yml`
+now uses Node 26 and runs the backend job on `windows-latest`; first green run on `ab0eb94`.
+
+The user asked about reading game network
 traffic to detect owned resources: refused (rule 6, SPEC 16). A screenshot-OCR inventory import
 was proposed, then dropped by the user for now (open question: whether the game shows item names
 as text next to quantities). Other ideas offered, not started: multi-item shopping list, price trend in the Scanner, edit/delete for markets and sources. The knowledge graph in `graphify-out/` (gitignored) was rebuilt the same day.
