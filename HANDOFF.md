@@ -1,7 +1,13 @@
 # HANDOFF — AION 2 Craft Profit Manager
 
-Updated 2026-11-05 at the end of the third session. Describes the real repository state at the
-latest commit on `main`, pushed to `https://github.com/zetrox75-jpg/SonOfAlfred`. App version 0.1.1.
+Updated 2026-11-11 (fourth session; sections below dated 2026-11-05 are from the third). Describes
+the real repository state, pushed to `https://github.com/zetrox75-jpg/SonOfAlfred`. App version
+0.1.2 (version bump on branch `chore/release-0.1.2`; installers built, **not published, not yet
+installed**).
+
+**Real database is at schema v6 since 2026-11-11 12:30** (the dev build upgraded it; backup
+`backups\aion2-pre-v6-20261111-123046.db`). Any build older than 0.1.2, including the installed
+0.1.1, refuses to open it ("schema v6, newer than this app supports (v5)"): install 0.1.2.
 
 ## Project
 
@@ -213,8 +219,11 @@ a real update from 0.1.1 to a later version has not been tested yet.
 
 ## Next tasks, in priority order
 
-0. Publish v0.1.1: GitHub release with all files of `src-tauri/target/release/bundle/upload/`, then
-   install it once by hand (0.1.0 has no updater) and prove the updater with a later version.
+0. Install 0.1.2 by hand (`src-tauri/target/release/bundle/upload/…_0.1.2_x64-setup.exe`, built
+   2026-11-11 with `node scripts/release.mjs 0.1.2`, exit 0: signed NSIS 4.3 MB, MSI 5.9 MB,
+   `latest.json`) and confirm it opens the v6 database. Then publish: GitHub release `v0.1.2` with
+   all three files of that folder. Whether v0.1.1 was ever published is not known; the updater
+   path from 0.1.1 is still unproven.
 1. With the user: set the commission (Settings), then check the Profit Scanner screen in the
    `.e2e` app (or the real app after a backup) and report the profitable recipes.
 2. Resolve the empty `units_sold` (browser check above); adjust the parser only if the live field
