@@ -18,7 +18,7 @@ export default function ScannerPage({ onNavigate }: { onNavigate: (id: string) =
   );
 }
 
-type SortKey = "name" | "category" | "unitCost" | "sell" | "profit" | "marginPercent" | "roiPercent" | "oldestPriceAt";
+type SortKey = "name" | "category" | "unitCost" | "sell" | "profit" | "marginPercent" | "roiPercent" | "oldestPriceAt" | "toAcquire";
 const sel = "rounded border border-night-600 bg-night-950 px-2 py-1.5 text-sm";
 const STATUS_STYLE = { reliable: "text-profit", unreliable: "text-stale", incomplete: "text-missing" };
 
@@ -27,7 +27,7 @@ function Scanner({ data, onNavigate }: { data: Workspace; onNavigate: (id: strin
   const money = useMoney();
   const [qty, setQty] = useState("1");
   const [useInventory, setUseInventory] = useState(false);
-  const [f, setF] = useState({ category: "", profession: "", verifiedOnly: false, profit: "", minMargin: "", minRoi: "", freshOnly: false });
+  const [f, setF] = useState({ category: "", profession: "", verifiedOnly: false, profit: "", minMargin: "", minRoi: "", freshOnly: false, stock: "" });
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "profit", desc: true });
   const quantity = /^\d+$/.test(qty) && Number(qty) > 0 ? Number(qty) : 1;
 
@@ -56,12 +56,13 @@ function Scanner({ data, onNavigate }: { data: Workspace; onNavigate: (id: strin
     if (f.profit === "positive" && !((r.profit ?? -1) > 0)) return false;
     if (f.profit === "negative" && !((r.profit ?? 1) < 0)) return false;
     if (f.minMargin && !((r.marginPercent ?? -Infinity) >= Number(f.minMargin))) return false;
-    if (f.minRoi && !((r.roiPercent ?? -Infinity) >= Number(f.minRoi))) return false;
+    if (f.stock && !(r.toAcquire !== null && r.toAcquire <= Number(f.stock))) return false;
+    if (f.minRoi &&!((r.roiPercent ?? -Infinity) >= Number(f.minRoi))) return false;
     return true;
   };
   const val = (r: ScanRow): string | number => ({
     name: itemLabel(name(r)), category: data.items.get(r.itemId)!.category ?? "", unitCost: r.unitCost ?? -Infinity, sell: r.sellPrice?.unitPrice ?? -Infinity,
-    profit: r.profit ?? -Infinity, marginPercent: r.marginPercent ?? -Infinity, roiPercent: r.roiPercent ?? -Infinity, oldestPriceAt: r.oldestPriceAt ?? "",
+    profit: r.profit ?? -Infinity, marginPercent: r.marginPercent ?? -Infinity, roiPercent: r.roiPercent ?? -Infinity, oldestPriceAt: r.oldestPriceAt ?? "", toAcquire: r.toAcquire ?? Infinity,
   })[sort.key];
   const sorted = (list: ScanRow[]) => [...list].sort((a, b) => {
     const x = val(a), y = val(b);
@@ -88,7 +89,7 @@ function Scanner({ data, onNavigate }: { data: Workspace; onNavigate: (id: strin
           <tr>
             <Th k="name" label={tr("Item")} /><Th k="category" label={tr("Category")} /><Th k="unitCost" label={tr("Unit cost")} right /><Th k="sell" label={tr("Sell price")} right />
             <th className="px-3 py-2 text-right uppercase">{tr("Commission")}</th><Th k="profit" label={tr("Net profit")} right /><Th k="marginPercent" label={tr("Margin")} right />
-            <Th k="roiPercent" label={tr("ROI")} right /><Th k="oldestPriceAt" label={tr("Oldest price")} /><th className="px-3 py-2 uppercase">{tr("Reliability")}</th>
+            <Th k="roiPercent" label={tr("ROI")} right /><Th k="toAcquire" label={tr("Items to buy")} right /><Th k="oldestPriceAt" label={tr("Oldest price")} /><th className="px-3 py-2 uppercase">{tr("Reliability")}</th>
           </tr>
         </thead>
         <tbody>
@@ -102,11 +103,12 @@ function Scanner({ data, onNavigate }: { data: Workspace; onNavigate: (id: strin
               <td className={`num px-3 py-1.5 text-right font-semibold ${r.profit === null ? "" : r.profit >= 0 ? "text-profit" : "text-loss"}`}>{r.profit === null ? "-" : money(r.profit)}</td>
               <td className="num px-3 py-1.5 text-right">{r.profit === null ? "-" : pct(r.marginPercent)}</td>
               <td className="num px-3 py-1.5 text-right">{r.profit === null ? "-" : pct(r.roiPercent)}</td>
+              <td className={`num px-3 py-1.5 text-right ${r.toAcquire === 0 ? "text-profit" : ""}`}>{r.toAcquire ?? "-"}</td>
               <td className="px-3 py-1.5 text-slate-400">{r.oldestPriceAt ? ago(r.oldestPriceAt) : "-"}</td>
               <td className={`px-3 py-1.5 text-xs ${STATUS_STYLE[r.status]}`}>{tr(r.status)}{r.issues.length > 0 && <span className="block text-slate-500">{r.issues.map((i) => i.replace(/^(\d+ )?(.*)$/, (_, n = "", s) => n + tr(s))).join(" · ")}</span>}</td>
             </tr>
           ))}
-          {list.length === 0 && <tr><td colSpan={10} className="px-3 py-5 text-center text-slate-500">{tr("Nothing matches these filters.")}</td></tr>}
+          {list.length === 0 && <tr><td colSpan={11} className="px-3 py-5 text-center text-slate-500">{tr("Nothing matches these filters.")}</td></tr>}
         </tbody>
       </table>
     </div>
@@ -119,6 +121,7 @@ function Scanner({ data, onNavigate }: { data: Workspace; onNavigate: (id: strin
         <label>{tr("Category")}<select aria-label={tr("Category")} className={`${sel} mt-1 block`} value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}><option value="">{tr("All")}</option>{categories.map((c) => <option key={c}>{c}</option>)}</select></label>
         <label>{tr("Profession")}<select aria-label={tr("Profession")} className={`${sel} mt-1 block`} value={f.profession} onChange={(e) => setF({ ...f, profession: e.target.value })}><option value="">{tr("All")}</option>{allProfessions.map((c) => <option key={c}>{c}</option>)}</select></label>
         <label>{tr("Profit")}<select aria-label={tr("Profit sign")} className={`${sel} mt-1 block`} value={f.profit} onChange={(e) => setF({ ...f, profit: e.target.value })}><option value="">{tr("All")}</option><option value="positive">{tr("Positive")}</option><option value="negative">{tr("Negative")}</option></select></label>
+        <label title={tr("Counts distinct items the cheapest plan still has to buy, after your stock.")}>{tr("From my stock")}<select aria-label={tr("From my stock")} className={`${sel} mt-1 block`} value={f.stock} onChange={(e) => { setF({ ...f, stock: e.target.value }); if (e.target.value) setUseInventory(true); }}><option value="">{tr("All")}</option><option value="0">{tr("Craftable now")}</option><option value="2">{tr("At most 2 items to buy")}</option></select></label>
         <label>{tr("Min margin %")}<input aria-label={tr("Minimum margin")} inputMode="decimal" className={`${inputCls} mt-1 w-24`} value={f.minMargin} onChange={(e) => setF({ ...f, minMargin: e.target.value })} /></label>
         <label>{tr("Min ROI %")}<input aria-label={tr("Minimum ROI")} inputMode="decimal" className={`${inputCls} mt-1 w-24`} value={f.minRoi} onChange={(e) => setF({ ...f, minRoi: e.target.value })} /></label>
         <div className="flex flex-col gap-1 pb-1 text-sm text-slate-300">

@@ -10,7 +10,7 @@ const r = (id: number, out: number, ings: [number, number][], reliable = true): 
 });
 const p = (unitPrice: number, stale = false): PricePoint => ({ unitPrice, stale, observedAt: stale ? "2026-10-01T00:00:00Z" : "2026-10-31T10:00:00Z", source: "t" });
 
-function input(o: { buy?: Record<number, PricePoint>; sell?: Record<number, PricePoint>; recipes?: PlanRecipe[]; commissionBps?: number | null } = {}): ScanInput {
+function input(o: { buy?: Record<number, PricePoint>; sell?: Record<number, PricePoint>; recipes?: PlanRecipe[]; commissionBps?: number | null; inventory?: Map<number, number> } = {}): ScanInput {
   const recipes = o.recipes ?? [r(1, INGOT, [[ORE, 2]]), r(2, SWORD, [[INGOT, 3]]), r(3, RING, [[GEM, 1]])];
   const byOut = new Map<number, PlanRecipe[]>();
   for (const x of recipes) byOut.set(x.outputItemId, [...(byOut.get(x.outputItemId) ?? []), x]);
@@ -18,7 +18,7 @@ function input(o: { buy?: Record<number, PricePoint>; sell?: Record<number, Pric
   const sell = o.sell ?? { [SWORD]: p(100), [INGOT]: p(15) };
   return {
     targets: [...byOut.keys()], quantity: 2, recipesByOutput: byOut, buyPrice: (id) => buy[id], sellPrice: (id) => sell[id],
-    inventory: new Map(), useInventory: false, commissionBps: "commissionBps" in o ? o.commissionBps! : 0, valuation: "cash",
+    inventory: o.inventory ?? new Map(), useInventory: !!o.inventory, commissionBps: "commissionBps" in o ? o.commissionBps! : 0, valuation: "cash",
   };
 }
 const row = (rows: ReturnType<typeof scanProfits>, id: number) => rows.find((x) => x.itemId === id)!;
@@ -45,6 +45,15 @@ describe("profit scanner", () => {
 
   it("is incomplete without a configured commission", () => {
     expect(row(scanProfits(input({ commissionBps: null })), SWORD)).toMatchObject({ status: "incomplete", issues: ["commission not set"] });
+  });
+
+  it("counts the items the stock does not cover (0 = craftable now)", () => {
+    // 2 swords need 6 ingots = 12 ore; 2 rings need 2 gems.
+    expect(row(scanProfits(input()), SWORD).toAcquire).toBe(1);
+    const rows = scanProfits(input({ inventory: new Map([[ORE, 12], [GEM, 1]]) }));
+    expect(row(rows, SWORD).toAcquire).toBe(0);
+    expect(row(rows, RING).toAcquire).toBe(1); // 1 gem owned, 2 needed, no price: still counted
+    expect(row(scanProfits(input({ inventory: new Map([[INGOT, 6]]) })), SWORD).toAcquire).toBe(0);
   });
 
   it("reports the oldest price used", () => {

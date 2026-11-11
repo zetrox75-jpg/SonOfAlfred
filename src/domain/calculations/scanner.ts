@@ -22,6 +22,8 @@ export interface ScanRow {
   /** Oldest price observation the result depends on (freshness). */
   oldestPriceAt: string | null;
   recipeReliable: boolean;
+  /** Distinct items the plan cannot cover: still to buy, or to craft with no usable recipe. 0 = craftable now. Null when there is no plan. */
+  toAcquire: number | null;
 }
 
 export interface ScanInput extends Omit<PlanInput, "targetItemId" | "quantity"> {
@@ -35,7 +37,7 @@ export interface ScanInput extends Omit<PlanInput, "targetItemId" | "quantity"> 
 export function scanProfits(input: ScanInput): ScanRow[] {
   return input.targets.map((itemId): ScanRow => {
     const base = { itemId, quantity: input.quantity, sellPrice: input.sellPrice(itemId) };
-    const empty = { totalCost: null, unitCost: null, commission: null, profit: null, marginPercent: null, roiPercent: null, oldestPriceAt: null, recipeReliable: false };
+    const empty = { totalCost: null, unitCost: null, commission: null, profit: null, marginPercent: null, roiPercent: null, oldestPriceAt: null, recipeReliable: false, toAcquire: null };
     let plan;
     try {
       plan = buildCraftPlan({ ...input, targetItemId: itemId, quantity: input.quantity });
@@ -72,6 +74,9 @@ export function scanProfits(input: ScanInput): ScanRow[] {
       roiPercent: done?.roiPercent ?? null,
       oldestPriceAt: used.length ? used.reduce((a, b) => (a < b ? a : b)) : null,
       recipeReliable: plan.unreliableRecipes.length === 0,
+      // ponytail: follows the cheapest plan, so an item it chose to buy counts as missing even if its
+      // own materials are owned. Re-plan with craft forced on owned-material items if that matters.
+      toAcquire: plan.lines.filter((l) => l.toBuy > 0).length + plan.missingRecipes.length,
     };
   });
 }
