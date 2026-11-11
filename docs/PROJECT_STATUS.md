@@ -136,7 +136,7 @@ The AI assistant did not fetch the API; the user saved four responses in a brows
 | Unofficial notice | Settings card: community service, no terms, `use=reference` undefined, permission **not confirmed**, listings never sales, exact requests and User-Agent | real window |
 | No live request in implementation or tests | adapter is pure (`src/services/market/aion2exchange.ts`); only `refresh.ts` calls `fetch`, only from buttons; a test fails if the adapter module calls `fetch` | `tests/aion2exchange.test.ts`; DB had 0 provider prices after the check |
 | Tests on the 4 validated fixtures | schemas, normalization, URLs, cache, storage | 17 tests |
-| Listings never completed sales | every observation stored as `lowest_listing`; `sold_*` fields not stored | tests: sell method "completed sale" finds no price |
+| Listings never completed sales | every observation stored as `lowest_listing`; `sold_*` fields never stored as sales | tests: sell method "completed sale" finds no price |
 | Region / server / faction separation | a market is bound to one server (`markets.provider_server`, migration v5, unique); only GLOBAL catalogue items are matched | tests: other server gets nothing; KR items never matched |
 | One-hour cache, refresh on explicit action | `canRefresh` per request key (`servers`, `items:<server>`, `prices:<server>:<item>`); buttons disabled until the hour has passed; server list reused for the hour | tests |
 | Network limited to the documented endpoints | capability `http:default` allows only `https://aion2.exchange/api/*`; URL builders only make `/servers`, `/items`, `/items/{id}/prices` with numeric ids | real window: `https://blocked.invalid/x` refused by the app ("url not allowed on the configured scope"); tests reject non-numeric ids |
@@ -271,14 +271,53 @@ craftable items, 52 complete, 6 profitable (top: Splendent Star Dragon Lord Neck
 about +35M each before commission); 347 incomplete (no sell price 282, missing buy price 216,
 unknown fee 91; overlapping).
 
+### Mark plan as crafted (2026-11-10)
+
+| Item | Evidence |
+|------|----------|
+| `inventoryAfterCraft` (pure): stock used is removed, batch surplus kept, the target's whole crafted output added; bought-only items unchanged | `tests/craftPlan.test.ts`, 2 new tests (24 in the file) |
+| Inventory page, "Current plan" card: "Mark plan as crafted" button, second click confirms, one transaction; hidden when an item of the plan has no usable recipe | `src/features/crafting/InventoryPage.tsx`; type-checked only, **not yet seen in a real window** |
+
+Stock still never changes on its own: only this user-pressed button applies a plan.
+
+### Scanner: craftable from stock (2026-11-10)
+
+| Item | Evidence |
+|------|----------|
+| `ScanRow.toAcquire`: distinct items the plan still has to buy, plus components with no usable recipe; 0 = craftable now; null when no plan | `tests/scanner.test.ts`, 1 new test (6 in the file) |
+| Scanner page: "From my stock" filter (All / Craftable now / At most 2 items to buy), which turns "Use my inventory" on; sortable "Items to buy" column | `src/features/scanner/ScannerPage.tsx`; type-checked only, **not yet seen in a real window** |
+
+Known limit: the count follows the cheapest plan. An intermediate the plan chose to buy counts as
+missing even when its own materials are owned.
+
+### Craft log with real profit (2026-11-10)
+
+| Item | Evidence |
+|------|----------|
+| Migration v6: `craft_log` (quantity > 0, sold quantity <= crafted, commission in basis points, null cost / estimate allowed, row deleted with its item) | `tests/migrations.test.ts` (table present); `tests/planQueries.test.ts`, 3 new tests; `cargo test --lib` runs the migration list. **Not yet applied to the real database** |
+| "Mark plan as crafted" also logs the batch in the same transaction: quantity produced, total cost under the current valuation, sell price and estimated profit at that moment (null when incomplete) | `src/features/crafting/InventoryPage.tsx`; type-checked only |
+| `realizedProfit`: net revenue minus the sold share of the cost, share rounded up; unknown cost gives revenue only | `tests/profit.test.ts`, 2 new tests |
+| Inventory page "Craft log" card (latest 50): real sale entry (quantity, unit price, commission from Settings stored with it), real profit beside the estimate, two-click delete | type-checked only, **not yet seen in a real window** |
+| `craft_log` included in the JSON export | `src/services/catalogue.ts` |
+
+Limits: one sale per log row (saving again replaces it); fixed fees are not logged; the demo
+cleanup preview does not count log rows removed with a demo item.
+
+Checks on 2026-11-10, after all three changes: `npx tsc --noEmit` exit 0; `npx vitest run` 13
+files, 130 tests passed; `cargo test --lib` 4 passed; `cargo clippy --all-targets` no warnings.
+
+`npm run e2e` on 2026-11-11: **8/8 PASS** after a script fix (`scripts/e2e.mjs` clicked the EN/FR
+switch as if it were a menu entry, reloading the window; it now clicks `nav ul button` only). The
+run covers a fresh database at v6 and the render of all 10 pages, not the three new interactions.
+
 ## Features: finished, partial, not available (README 12)
 
 | Status | Features |
 |--------|----------|
 | Finished and tested | Catalogue (search, filters, item sheet, add/edit, recipe archive); CSV import with preview and all-or-nothing write (items, recipes, prices, inventory); CSV and JSON export; calculation engine (chains, batches, stock, shared ingredients, alternatives, cycles, cash vs economic cost, profitability, break-even); calculator, crafting tree, buy-vs-craft; scanner; market prices with kinds, freshness, history chart; inventory; dashboard; demo data cleanup; backup / restore; backup before migrations; start-up and render error screens; end-to-end script |
-| Built, not fully verified | NSIS and MSI installers (**clean-install test Deferred / Not yet verified**); native error box for start failures (not triggered); native Save/Open dialogs of backup/restore (not driven by the assistant) |
-| Partial | aion2.exchange price adapter: default provider, enabled by default (user-authorized 2026-10-31); live refresh and Splendent import checked in the `.e2e` app; MT-1 checks 4 and 6 not tested; no pagination beyond 1000 items. Community recipe imports (Splendent model, gamers4.life graph): built, tested, run once in the `.e2e` app; morph/conversion routes and combo chances not used |
-| Not available | Verified AION 2 Global recipe/item/price data (only community data, imported by the user; nothing shipped); XLSX import; edit/delete of markets and sources; item archiving; nested categories; item icons; code signing; auto-update |
+| Built, not fully verified | NSIS and MSI installers (**clean-install test Deferred / Not yet verified**); native error box for start failures (not triggered); native Save/Open dialogs of backup/restore (not driven by the assistant); in-app updater from 0.1.1 (not yet proven by a real update) |
+| Partial | aion2.exchange price adapter: default provider, enabled by default (user-authorized 2026-10-31); live refresh and Splendent import checked in the `.e2e` app; MT-1 checks 4 and 6 not tested; no pagination beyond 1000 items. Community recipe imports (Splendent model, gamers4.life graph): built, tested, run once in the `.e2e` app; morph/conversion routes and combo chances not used. Item icons: loaded from gamers4.life when shown, letter tile when offline and uncached, 116 listed files missing on the site |
+| Not available | Verified AION 2 Global recipe/item/price data (only community data, imported by the user; nothing shipped); XLSX import; edit/delete of markets and sources; item archiving; nested categories; code signing |
 
 ## Known gaps and assumptions
 
@@ -291,7 +330,8 @@ unknown fee 91; overlapping).
   `/api/items` is requested with `limit=1000` (957 items on the fixture date): if the API grows past
   1000 items, the refresh reports that only part was requested (no pagination yet).
   Items are matched to the catalogue by exact name (case/spacing ignored), Global items only.
-  The undocumented `sold_*` statistics are ignored.
+  The undocumented `sold_*` statistics are kept in the raw snapshot under `community_unconfirmed`,
+  never used or shown as sales.
 - Providers implement `MarketDataProvider` (`src/services/market/provider.ts`, README 16.3) and are
   registered by id; a market's `provider_server` is `<provider id>:<server id>`. Real provider:
   aion2.exchange (`refresh.ts`). The second implementation is the test-only mock provider.
@@ -299,7 +339,7 @@ unknown fee 91; overlapping).
   in the same pass: fix the reported errors and re-import to see the rest.
 - XLSX is not read: save as CSV UTF-8 from Excel.
 - Market and source deletion/editing UI does not exist yet; items cannot be archived; categories are flat.
-- No item icons. Installers are not code-signed.
+- Installers are not code-signed.
 - The 4 DEMO items and 2 DEMO recipes are still in the local database: remove them with
   Settings > Demo / test data.
 - Git repository (branch `main`) since 2026-10-31; pushed to `https://github.com/zetrox75-jpg/SonOfAlfred` on 2026-10-31.

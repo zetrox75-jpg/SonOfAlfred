@@ -25,7 +25,7 @@ user agent.
 ### Steps
 
 1. Start the app (`src-tauri\target\release\aion2-craft-profit-manager.exe` or `npm run tauri dev`).
-2. Settings (Alt+0) > "Automatic prices: aion2.exchange": tick the acknowledgement > **Enable**.
+2. Settings (Alt+0) > "Automatic prices: aion2.exchange": check that Status is **enabled**. If it is disabled, tick "I have read this notice." > **Enable**.
 3. Market / Prices (Alt+6) > **Load server list**.
 4. In "Choose a server..." pick the region · server · faction to test > **Create market**.
 5. Select that market in the **Market** dropdown at the top of the page.

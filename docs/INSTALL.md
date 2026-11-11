@@ -119,14 +119,14 @@ updater (0.1.0) must install the next version by hand once.
 ## Known limitations
 
 - Clean-install validation of both installers: **Deferred / Not yet verified**.
-- Installers are not code-signed; no auto-update.
+- Installers are not code-signed. In-app updates exist from 0.1.1 and use the updater key.
 - No AION 2 Global recipe, item or price data is shipped; nothing is verified Global yet
   (`docs/DATA_SOURCES.md`). Data is imported by the user (CSV templates in `data/templates/`).
 - Automatic prices: only the aion2.exchange adapter (community source, enabled by default,
   user-authorized 2026-10-31; can be disabled in Settings), listings only (never completed
   sales), at most 1000 items per request.
 - XLSX is not read (save as CSV UTF-8). No edit/delete screens for markets and sources, no item
-  archiving, flat categories, no item icons.
+  archiving, flat categories.
 - In-game commission rounding is unknown: revenue is rounded down.
 
 ## Clean-install test (Deferred / Not yet verified)
