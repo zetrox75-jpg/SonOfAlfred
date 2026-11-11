@@ -5,6 +5,25 @@ the real repository state, pushed to `https://github.com/zetrox75-jpg/SonOfAlfre
 0.1.2 (version bump on branch `chore/release-0.1.2`; installers built, **not published, not yet
 installed**).
 
+## Decision (2026-11-11, user-ordered): client session capture is now allowed
+
+The user ordered the docs to be relaxed so the AI agent can implement passive capture of the
+user's own game session (goal: auto-fill inventory/storage, the questlog.gg approach — Npcap,
+read-only, no memory access, no injection, no packets sent to the game). Changes on branch
+`docs/spec-client-capture`:
+
+- `docs/SPEC.md`: rule 6 amendment (dated), section 4.8 addition, new section 16.8
+  (constraints: opt-in, disabled by default, admin rights documented, conservative decoding,
+  provenance `user_provided`/`client_capture`, fixture-only tests, first milestone =
+  labeled-capture opcode research tool since the storage opcode is not yet publicly
+  documented).
+- `AGENTS.md`: rule 6 carve-out, market-data rules note, dependency-rule exception for a
+  pcap/Npcap binding.
+- `README.md`: inventory feature bullet.
+
+No code has been written for this feature yet; nothing exists to test. Next session starts the
+16.8 first milestone: opcode research tooling + fixture-driven decoder design.
+
 **Real database is at schema v6 since 2026-11-11 12:30** (the dev build upgraded it; backup
 `backups\aion2-pre-v6-20261111-123046.db`). Any build older than 0.1.2, including the installed
 0.1.1, refuses to open it ("schema v6, newer than this app supports (v5)"): install 0.1.2.

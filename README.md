@@ -24,7 +24,10 @@ computes full crafting chains and ranks the most profitable crafts — offline f
   incomplete/stale data handling (a missing price is never treated as zero).
 - **Market & prices** — manual entry with history, CSV import, and the community
   `aion2.exchange` provider (public, read-only, rate-limited, hourly refresh).
-- **Inventory** — owned quantities deducted from crafting plans, buy/craft comparisons.
+- **Inventory** — owned quantities deducted from crafting plans, buy/craft comparisons,
+  with optional auto-import by passive capture of your own game session
+  (experimental, opt-in, Npcap, read-only — same approach as community DPS meters;
+  see `docs/SPEC.md` §16.8). Manual entry and CSV always work without it.
 - **Import / export** — CSV and full JSON export, SQLite backup and restore.
 - **Offline first** — no account, no server: the app works fully with manual pricing offline.
 

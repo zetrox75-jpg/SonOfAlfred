@@ -26,10 +26,14 @@ and the spec disagree, the spec wins, and this file must be fixed.
 5. Never present an old manual price as a current price: always show source and
    last-updated date.
 6. Never defeat a site's technical protections (logins, bot walls, paywalls) and never
-   touch private/internal game endpoints, game-client modification or account
-   credentials. Public, keyless, read-only community APIs (e.g. aion2.exchange) are
-   explicitly allowed, with an honest User-Agent, rate limits, caching and attribution
-   recorded in `docs/DATA_SOURCES.md`.
+   touch account credentials or modify the game client. Public, keyless, read-only
+   community APIs (e.g. aion2.exchange) are explicitly allowed, with an honest
+   User-Agent, rate limits, caching and attribution recorded in
+   `docs/DATA_SOURCES.md`. Passive local network capture of the user's own game
+   session is also allowed (user-ordered 2026-11-11, SPEC 16.8): read-only
+   observation of packets that already reach the user's machine (Npcap), never
+   reading or writing game memory, never injecting into the client, never sending
+   packets to game servers, never extracting credentials.
 7. Never block development waiting for a complete catalogue: build with clearly
    fictional, isolated demo data, then import real data.
 8. Inspect the repository and preserve existing work before major changes. Do not
@@ -53,6 +57,9 @@ and the spec disagree, the spec wins, and this file must be fixed.
 - **AI assistants must never fetch aion2.exchange or any site whose robots.txt disallows
   AI agents.** The app's own provider calls are user-authorized; ask the user to save
   responses as fixtures instead.
+- The client session capture provider (SPEC 16.8) is an allowed data source for the
+  user's own inventory/storage quantities: opt-in, behind the same adapter/registry
+  pattern, fixture-tested only, and it must degrade gracefully when unavailable.
 
 ## Workflow
 
@@ -79,7 +86,10 @@ and the spec disagree, the spec wins, and this file must be fixed.
 6. **Architecture:** strict separation between UI, domain logic, data access and
    import/export; strict TypeScript; explicit error handling; no business logic in visual
    components; versioned SQLite migrations; money as integers in the smallest unit.
-7. **New dependencies:** only with a reason; prefer none.
+7. **New dependencies:** only with a reason; prefer none. Exception (user-ordered
+   2026-11-11): the client-capture feature (SPEC 16.8) may add a packet-capture
+   dependency (e.g. a Rust pcap/Npcap binding) — justify the choice in the PR and
+   keep it optional at build/runtime.
 
 ## Session handoff
 
