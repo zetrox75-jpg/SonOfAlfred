@@ -16,7 +16,7 @@ rentables.
 Tu es l'ingénieur logiciel principal de ce projet. Tu dois construire,
 tester et documenter l'application de bout en bout.
 
-### Règles impératives (relaxed by the user on 2026-10-31 — this wording overrides the earlier stricter one)
+### Règles impératives (relaxed by the user on 2026-10-31 — this wording overrides the earlier stricter one; rule 6 amended 2026-11-11 to allow passive local session capture, see 16.8)
 
 1.  **Never claim a feature exists if it is not actually implemented and tested.**
 2.  **Never invent recipes, quantities, statistics, taxes, probabilities or AION 2 Global market data.** Data integrity stays strict; the rules below are relaxed so the project can move forward.
@@ -24,6 +24,7 @@ tester et documenter l'application de bout en bout.
 4.  Provider fields whose exact semantics are not documented (for example `units_sold` and `sold_avg_price` from aion2.exchange) **may be stored** with a `community`/`unknown` label and a note describing what is known. Do not drop them by default, and never present them as confirmed sale prices.
 5.  Never present an old manual price as a current price. Always show its source and last-updated date.
 6.  Do not defeat a site's technical protections (logins, bot walls, paywalls) and never touch private/internal game endpoints, game-client modification or account credentials. **Public, keyless, read-only community APIs — such as aion2.exchange — are explicitly allowed.** Identify the app honestly in its User-Agent, respect rate limits and server-side caching, attribute the source, and record it in `docs/DATA_SOURCES.md`. The absence of written terms of service does not by itself forbid using a public read-only API: document what is known and unknown instead of blocking on it.
+    **Amendment (user-ordered, 2026-11-11):** passive local network capture of the user's own game session is also explicitly permitted — read-only observation of packets that already reach the user's machine (Npcap driver), the same passive approach as community DPS meters and questlog.gg. It must never read or write game memory, never inject into or modify the game client, never send packets to game servers, and never extract account credentials. Requirements and constraints are defined in section 16.8.
 7.  Do not block development waiting for a complete catalogue: build with clearly fictional demo data, isolated and labelled, then import real data.
 8.  Inspect the repository and preserve existing work before major changes.
 9.  Work in functional steps, run the tests and fix errors before declaring a step finished.
@@ -259,6 +260,13 @@ saisie manuelle et import de fichiers.
 
 Permettre d'enregistrer les quantités possédées, de les modifier et de
 les déduire d'un plan de fabrication.
+
+Import optionnel des quantités possédées par **capture passive de la session de jeu
+de l'utilisateur** (ajouté sur décision utilisateur du 2026-11-11, voir 16.8) :
+observation en lecture seule du trafic réseau local, sans jamais modifier le client
+de jeu ni envoyer de paquets aux serveurs. Fonction expérimentale, désactivée par
+défaut ; la saisie manuelle et l'import CSV restent toujours disponibles et
+fonctionnels sans elle.
 
 Afficher :
 
@@ -899,5 +907,48 @@ Do not silently use prices from another region, server, faction, game version or
 - Duplicate observations are handled deterministically.
 - The UI shows the source and timestamp for every automatic price.
 - The app never claims that data is real-time unless the provider guarantees that and the observation timestamp supports it.
-- No private endpoint, anti-cheat bypass, game-client modification, credential extraction or prohibited automation is introduced.
+- No private endpoint, anti-cheat bypass, game-client modification, credential extraction or prohibited automation is introduced. Passive local client-session capture as specified in 16.8 is not a private-endpoint integration and is permitted under its own constraints.
 - The provider's terms and permitted usage are documented before release; where a public, keyless, read-only provider has no written terms, that fact is recorded and does not block the release.
+
+### 16.8 Client session capture provider (added 2026-11-11, user-ordered)
+
+The application may include an optional provider that observes the user's own AION 2
+session passively on their machine, to auto-fill inventory/storage quantities. This is
+the same passive approach used by community tools such as questlog.gg and AION 2 DPS
+meters: it reads a copy of the game's network traffic that already reaches the user's
+machine (Npcap driver) and never interacts with the game process or the game servers.
+Research context (checked 2026-11-11): the community has documented the AION 2 wire
+protocol (TCP, varint length prefix, LZ4 bundles; server-to-client frames stay readable
+after the world handshake), and several open-source projects already decode combat,
+market or farming flows this way. The storage/inventory opcode is not publicly
+documented yet, so the first implementation step is capture-based opcode research on
+the user's own sessions.
+
+Hard constraints:
+
+- **Read-only and local.** Capture only packets that already reach the user's machine;
+  never send packets to game servers, never read or write game memory, never inject into
+  or modify the game client, never extract account credentials.
+- **Opt-in and experimental.** Disabled by default; the app must keep working fully
+  (manual entry, CSV, aion2.exchange) when it is unavailable, the driver is missing, or
+  parsing fails.
+- **Admin rights and prerequisites are honest.** Npcap must be installed by the user
+  and elevated rights are required at capture start; say so plainly in the UI and in
+  `docs/INSTALL.md`.
+- **Conservative decoding.** The protocol is undocumented and unofficial and may break
+  with any client patch. Every opcode/shape used must be validated against real
+  captures; unknown or malformed packets are rejected, never guessed. A capture that
+  fails to decode must never corrupt or overwrite existing inventory data.
+- **Provenance.** Imported quantities keep status `user_provided` with source
+  `client_capture` (capture date, character/server context when decoded); they are the
+  user's own inventory and are never presented as market prices.
+- **Tests use fixtures only.** Decoding is tested against saved, anonymized capture
+  fixtures; tests never depend on a running game client. No raw captures, session keys
+  or account identifiers are committed to source control.
+- **Same architecture as market providers (16.3).** An independent adapter in the
+  provider registry; parsing failures are handled and shown, never crashing the app or
+  blocking crafting calculations.
+- **First milestone:** a labeled-capture opcode research tool (the user performs one
+  labeled action, e.g. "open storage", and the tool reports candidate frames) plus a
+  fixture-driven decoder; auto-import into the inventory table comes only after the
+  storage opcode is confirmed and stable.
