@@ -87,7 +87,8 @@ try {
   check("startup without error, no backup for a new database", s1.error === null && s1.backup === null, JSON.stringify(s1));
   const pages = await evaluate(`
     const out = [];
-    for (const b of [...document.querySelectorAll('nav button')]) {
+    // Menu entries only: the EN/FR buttons in the nav footer reload the window.
+    for (const b of [...document.querySelectorAll('nav ul button')]) {
       b.click();
       await new Promise((r) => setTimeout(r, 700));
       const main = document.querySelector('main');
