@@ -134,7 +134,7 @@ updater (0.1.0) must install the next version by hand once.
 To be done on a clean Windows environment (Windows Sandbox, a VM or a fresh user account), once per
 installer:
 
-1. Install. 2. Start the app; Settings shows schema v5 and foreign keys "Enforced".
+1. Install. 2. Start the app; Settings shows schema v6 and foreign keys "Enforced".
 3. Catalogue: add an item `Sandbox test` (region OTHER). 4. Settings: *Back up now…* to the default place.
 5. Close the app, start it again: `Sandbox test` is still there and the backup file exists.
 
