@@ -1,6 +1,6 @@
 // FICTIONAL TEST DATA: ids, recipes and prices are invented to check the math.
 import { describe, expect, it } from "vitest";
-import { buildCraftPlan, PlanError, profitability, verifiedOnly, type PlanInput, type PlanRecipe, type PricePoint } from "../src/domain/calculations/craftPlan";
+import { buildCraftPlan, inventoryAfterCraft, PlanError, profitability, verifiedOnly, type PlanInput, type PlanRecipe, type PricePoint } from "../src/domain/calculations/craftPlan";
 
 const ORE = 1, LEATHER = 2, INGOT = 3, SWORD = 4, HANDLE = 5, COAL = 6, SWORD2 = 7, X = 8, Y = 9, Z = 10;
 
@@ -203,5 +203,19 @@ describe("profitability", () => {
   it("is incomplete when cost, sell price or commission is missing", () => {
     expect(profitability({ totalCost: null, sellPrice: undefined, quantitySold: 1, commissionBps: null, fixedFees: 0 }))
       .toEqual({ status: "incomplete", missing: ["cost", "sell_price", "commission"] });
+  });
+});
+
+describe("inventory after crafting", () => {
+  it("consumes the stock used, keeps batch surplus and adds the crafted target", () => {
+    // 1 sword: 3 ingots needed, 1 owned -> 2 to craft = 1 run of 2, no surplus; leather 1 of 5 owned.
+    const inventory = new Map([[INGOT, 1], [LEATHER, 5], [SWORD, 4]]);
+    const plan = buildCraftPlan(input({ quantity: 1, inventory }));
+    expect(inventoryAfterCraft(plan, inventory)).toEqual(new Map([[SWORD, 5], [INGOT, 0], [LEATHER, 4]]));
+  });
+
+  it("keeps the surplus of a rounded batch and leaves bought-only items unchanged", () => {
+    const plan = buildCraftPlan(input({ quantity: 1 })); // 3 ingots needed, 2 runs make 4
+    expect(inventoryAfterCraft(plan, new Map())).toEqual(new Map([[SWORD, 1], [INGOT, 1]]));
   });
 });

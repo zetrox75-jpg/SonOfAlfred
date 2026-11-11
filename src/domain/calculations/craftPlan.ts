@@ -312,6 +312,22 @@ export function buildCraftPlan(input: PlanInput): CraftPlan {
   };
 }
 
+/**
+ * Owned quantities after the plan has been carried out in game, for the items that change:
+ * stock used is consumed, batch surplus is kept, and the whole crafted output of the target
+ * is added. Purchases are consumed entirely, so bought-only items do not change.
+ */
+export function inventoryAfterCraft(plan: CraftPlan, inventory: Map<number, number>): Map<number, number> {
+  const after = new Map<number, number>();
+  for (const l of plan.lines) {
+    // surplus is only meaningful for crafted lines (bought lines produce nothing).
+    const gained = l.runs === 0 ? 0 : l.itemId === plan.tree.itemId ? l.produced : l.surplus;
+    const delta = gained - l.fromStock;
+    if (delta !== 0) after.set(l.itemId, (inventory.get(l.itemId) ?? 0) + delta);
+  }
+  return after;
+}
+
 export interface ProfitInput {
   totalCost: number | null;
   sellPrice: PricePoint | undefined;

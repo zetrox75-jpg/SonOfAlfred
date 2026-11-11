@@ -32,7 +32,7 @@ export const loadNames = async (table: "categories" | "professions" | "data_sour
 
 const EXPORT_TABLES = [
   "data_sources", "categories", "professions", "items", "recipes", "recipe_ingredients",
-  "markets", "market_prices", "inventory", "settings",
+  "markets", "market_prices", "inventory", "settings", "craft_log",
 ] as const;
 
 /** Full JSON dump of every table, with the schema version it came from. */

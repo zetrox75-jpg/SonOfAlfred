@@ -167,7 +167,59 @@ export function setInventory(itemId: number, quantity: number): Statement[] {
       }];
 }
 
-export const MARKETS_SQL = "SELECT id, name, region, server, faction, provider_server FROM markets ORDER BY name COLLATE NOCASE";
+// ---- Craft log ----
+
+export interface CraftLogRow {
+  id: number;
+  item_id: number;
+  quantity: number;
+  total_cost: number | null;
+  valuation: "cash" | "economic";
+  est_unit_price: number | null;
+  est_profit: number | null;
+  sold_quantity: number | null;
+  sold_unit_price: number | null;
+  sold_commission_bps: number | null;
+  sold_at: string | null;
+  crafted_at: string;
+}
+
+// ponytail: latest 50 only; add paging when someone needs older rows on screen (JSON export has all).
+export const CRAFT_LOG_SQL = `
+  SELECT id, item_id, quantity, total_cost, valuation, est_unit_price, est_profit,
+         sold_quantity, sold_unit_price, sold_commission_bps, sold_at, crafted_at
+  FROM craft_log ORDER BY crafted_at DESC, id DESC LIMIT 50`;
+
+const nat = (name: string, v: number, min = 0) => {
+  if (!Number.isSafeInteger(v) || v < min) throw new RangeError(`${name} must be a whole number >= ${min}`);
+};
+
+/** Records one crafted batch. Null cost / estimate = incomplete at craft time, kept as null. */
+export function logCraft(e: {
+  itemId: number; quantity: number; marketId: number | null; totalCost: number | null;
+  valuation: "cash" | "economic"; estUnitPrice: number | null; estProfit: number | null;
+}): Statement[] {
+  nat("Quantity", e.quantity, 1);
+  return [{
+    sql: `INSERT INTO craft_log (item_id, quantity, market_id, total_cost, valuation, est_unit_price, est_profit) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    params: [e.itemId, e.quantity, e.marketId, e.totalCost, e.valuation, e.estUnitPrice, e.estProfit],
+  }];
+}
+
+/** Sets (or replaces) the real sale of a logged craft, with the commission rate applied to it. */
+export function recordSale(id: number, quantity: number, unitPrice: number, commissionBps: number): Statement[] {
+  nat("Sold quantity", quantity, 1);
+  nat("Sold unit price", unitPrice);
+  nat("Commission", commissionBps);
+  return [{
+    sql: `UPDATE craft_log SET sold_quantity = ?, sold_unit_price = ?, sold_commission_bps = ?, sold_at = ${NOW} WHERE id = ?`,
+    params: [quantity, unitPrice, commissionBps, id],
+  }];
+}
+
+export const deleteCraftLog = (id: number): Statement[] => [{ sql: "DELETE FROM craft_log WHERE id = ?", params: [id] }];
+
+export const MARKETS_SQL ="SELECT id, name, region, server, faction, provider_server FROM markets ORDER BY name COLLATE NOCASE";
 export interface MarketRow {
   id: number;
   name: string;

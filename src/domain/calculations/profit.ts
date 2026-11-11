@@ -100,6 +100,19 @@ export function minimumSalePrice(totalCost: number, quantity: number, commission
   return Number((need + per - 1n) / per);
 }
 
+/**
+ * Real result of selling part or all of a crafted batch. The cost share of the units sold is
+ * rounded UP (conservative). An unknown cost (null) gives the revenue only: profit stays null.
+ */
+export function realizedProfit(totalCost: number | null, produced: number, soldQuantity: number, soldUnitPrice: number, commissionBps: number) {
+  assertInt("produced", produced, 1);
+  assertInt("soldQuantity", soldQuantity, 1);
+  if (soldQuantity > produced) throw new RangeError(`soldQuantity must be <= ${produced}, got ${soldQuantity}`);
+  const revenue = netRevenue(soldUnitPrice, soldQuantity, commissionBps);
+  const cost = totalCost === null ? null : Math.ceil((totalCost * soldQuantity) / produced);
+  return { revenue, cost, profit: cost === null ? null : netProfit(revenue, cost) };
+}
+
 /** A price older than maxAgeHours is stale and must not back a "reliable" result. */
 export function isStale(observedAt: string, now: Date, maxAgeHours: number): boolean {
   const t = Date.parse(observedAt);

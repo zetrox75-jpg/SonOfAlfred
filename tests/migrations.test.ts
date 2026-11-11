@@ -22,7 +22,7 @@ describe("schema", () => {
   it("creates every table", () => {
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map((r) => r.name);
     expect(tables).toEqual(
-      expect.arrayContaining(["categories", "data_sources", "inventory", "items", "market_prices", "markets", "professions",
+      expect.arrayContaining(["categories", "craft_log", "data_sources", "inventory", "items", "market_prices", "markets", "professions",
         "recipe_ingredients", "recipes", "settings"]),
     );
   });

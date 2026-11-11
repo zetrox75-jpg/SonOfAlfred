@@ -17,6 +17,7 @@ pub const MIGRATIONS: &[(i64, &str, &str)] = &[
     (3, "market_faction", include_str!("../migrations/0003_market_faction.sql")),
     (4, "price_model", include_str!("../migrations/0004_price_model.sql")),
     (5, "market_provider_server", include_str!("../migrations/0005_market_provider_server.sql")),
+    (6, "craft_log", include_str!("../migrations/0006_craft_log.sql")),
 ];
 
 pub fn latest_version() -> i64 {

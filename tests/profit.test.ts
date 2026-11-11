@@ -11,6 +11,7 @@ import {
   recipeCost,
   roiPercent,
   unitCost,
+  realizedProfit,
 } from "../src/domain/calculations/profit";
 import { isReliable } from "../src/domain/models";
 
@@ -133,5 +134,19 @@ describe("region and verification", () => {
   it("the per-analysis filter excludes community data", () => {
     expect(isReliable({ game_region: "GLOBAL", verification_status: "community" }, false)).toBe(false);
     expect(isReliable({ game_region: "GLOBAL", verification_status: "verified" }, false)).toBe(true);
+  });
+});
+
+describe("realized profit of a crafted batch", () => {
+  it("charges the sold share of the cost, rounded up, against net revenue", () => {
+    // 3 crafted for 100; 2 sold at 60 with 5%: revenue floor(120 x 0.95) = 114, cost ceil(66.67) = 67.
+    expect(realizedProfit(100, 3, 2, 60, 500)).toEqual({ revenue: 114, cost: 67, profit: 47 });
+    expect(realizedProfit(100, 3, 3, 30, 0)).toEqual({ revenue: 90, cost: 100, profit: -10 });
+  });
+
+  it("keeps the profit unknown when the cost was incomplete, and rejects impossible sales", () => {
+    expect(realizedProfit(null, 3, 3, 30, 0)).toEqual({ revenue: 90, cost: null, profit: null });
+    expect(() => realizedProfit(100, 3, 4, 30, 0)).toThrow(RangeError);
+    expect(() => realizedProfit(100, 3, 0, 30, 0)).toThrow(RangeError);
   });
 });
