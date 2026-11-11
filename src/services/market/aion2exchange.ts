@@ -9,7 +9,7 @@ import type { ProviderSource } from "./provider";
 //
 // What the numbers ARE (OpenAPI descriptions): `price` and every history point are the
 // CHEAPEST ACTIVE LISTING. They are stored as `lowest_listing`, never as a sale. The
-// undocumented `sold_*` fields are not stored at all until their meaning is confirmed.
+// undocumented `sold_*` fields stay in the raw snapshot under `community_unconfirmed`, never as sales.
 
 export const PROVIDER = {
   id: "aion2exchange",

@@ -27,7 +27,7 @@ provider, Splendent craft recipes, gamers4.life profession recipes. Per-step evi
 | Area | Files |
 |------|-------|
 | Rust commands (`write_transaction`, backup, restore, restart, `startup_status`), `db-guard` start-up plugin, native error box | `src-tauri/src/lib.rs` |
-| Migration list (single source), backup (`VACUUM INTO`), restore checks and swap, pre-migration backup, Rust tests | `src-tauri/src/backup.rs`, `src-tauri/migrations/*.sql` (v1-v5) |
+| Migration list (single source), backup (`VACUUM INTO`), restore checks and swap, pre-migration backup, Rust tests | `src-tauri/src/backup.rs`, `src-tauri/migrations/*.sql` (v1-v6) |
 | Permissions (core, read-only SQL, save + open dialogs, write chosen file, HTTP only to `https://aion2.exchange/api/*`) | `src-tauri/capabilities/default.json` |
 | Domain: models (`isReliable`), profit maths, crafting plan engine (`verifiedOnly` filter), scanner, CSV validation | `src/domain/**` |
 | Market provider interface + registry (README 16.3) | `src/services/market/provider.ts` |
@@ -54,6 +54,58 @@ AION 2 theme (bundled Cinzel font, `src/styles/index.css`); `ItemName` and `Item
 test `tests/i18n.test.ts`); French item names (`src/data/itemNamesFr.json`); update banner
 (`src/app/UpdateBanner.tsx`). Status messages built in services (import results, provider errors)
 are still English. Seen in the `.e2e` app only by the user.
+
+## Added 2026-11-10 (PR #2, branch `feat/craft-log-stock-scanner`, merged into `main` 2026-11-11)
+
+"Mark plan as crafted" on the Inventory page ("Current plan" card): after crafting in game, one
+confirmed click removes the stock the plan used, keeps batch surplus and adds the crafted output.
+Pure logic: `inventoryAfterCraft` in `src/domain/calculations/craftPlan.ts`, 2 tests in
+`tests/craftPlan.test.ts`.
+
+Scanner "From my stock" filter (All / Craftable now / At most 2 items to buy) and a sortable
+"Items to buy" column, from `ScanRow.toAcquire` in `src/domain/calculations/scanner.ts`, 1 test in
+`tests/scanner.test.ts`. Known limit: the count follows the cheapest plan, so an intermediate the
+plan chose to buy counts as missing even when its materials are owned.
+
+Craft log: **migration v6** (`0006_craft_log.sql`, table `craft_log`, registered in `backup.rs`).
+"Mark plan as crafted" now also writes one log row in the same transaction (item, quantity
+produced, total cost under the current valuation, sell price and estimated profit at that moment;
+null when incomplete). Inventory page shows a "Craft log" card (latest 50, hidden when empty):
+the user types the real sale (quantity, unit price), the commission from Settings is stored with
+it, and real profit = net revenue minus the sold share of the cost (rounded up). Code:
+`logCraft` / `recordSale` / `deleteCraftLog` / `CRAFT_LOG_SQL` in `src/services/planQueries.ts`,
+`realizedProfit` in `src/domain/calculations/profit.ts`, `craft_log` added to the JSON export.
+Tests: 3 in `tests/planQueries.test.ts`, 2 in `tests/profit.test.ts`. Decisions: a log row is
+deleted with its item (`ON DELETE CASCADE`, so demo cleanup needs no change, and its preview does
+not count log rows); one sale per row, re-saving replaces it; fixed fees are not logged.
+**The first launch of this build upgrades the real database to v6** (automatic pre-upgrade backup).
+
+Checks that day, after all three changes: `npx tsc --noEmit` exit 0; `npx vitest run` 13 files,
+130 passed; `cargo test --lib` 4 passed; `cargo clippy --all-targets` no warnings.
+
+`npm run e2e` on 2026-11-11: first run failed at "all 10 pages render" because the script clicked
+every `nav button`, including the EN/FR switch (added in session 3), which reloads the window.
+Selector fixed to `nav ul button` in `scripts/e2e.mjs`; rerun **8/8 PASS** (fresh database
+migrated to v6, all 10 pages render, backup, persistence, restore). The run deleted the `.e2e`
+test data, including the session 3 live data. e2e does not press "Mark plan as crafted", the
+Scanner filter or the craft log sale entry.
+
+Real-window check on 2026-11-11 in the isolated `.e2e` app (one-off CDP script, fictional UITEST
+items in region OTHER, data deleted afterwards), 10/10 PASS: Scanner "Items to buy" showed 1
+without stock and 0 with "Craftable now" (which ticked "Use my inventory"); opening the item from
+the Scanner, then "Mark plan as crafted" and its confirm step, changed stock 9 ore -> 3, +1 ingot
+surplus, +1 sword and wrote one log row (cost 70, estimated profit 215); typing a sale of 1 x 280
+at 5% showed net revenue 266 and real profit 196. Not checked: French labels, the delete button,
+incomplete-cost rows.
+
+CI: both jobs had failed on every run since the workflow was added (Node 22 could not resolve
+`node:sqlite` for the jsdom test; Ubuntu lacked the GTK libraries). `.github/workflows/ci.yml`
+now uses Node 26 and runs the backend job on `windows-latest`; first green run on `ab0eb94`.
+
+The user asked about reading game network
+traffic to detect owned resources: refused (rule 6, SPEC 16). A screenshot-OCR inventory import
+was proposed, then dropped by the user for now (open question: whether the game shows item names
+as text next to quantities). Other ideas offered, not started: multi-item shopping list, price trend in the Scanner, edit/delete for markets and sources. The knowledge graph in `graphify-out/` (gitignored) was rebuilt the same day.
 
 ## Tested (exact commands and results, 2026-11-05, session 3)
 
@@ -103,7 +155,7 @@ the Scanner screen itself with commission set; clean install (Deferred); native 
   intended; undocumented.
 - **Clean-install test: Deferred / Not yet verified.** Procedure: `docs/INSTALL.md`.
 - Not available: XLSX import; edit/delete UI for markets and sources; item archiving; nested
-  categories; item icons; code signing; auto-update.
+  categories; code signing.
 - The real DB still contains 4 DEMO items and 2 DEMO recipes (fictional, region OTHER): Settings >
   Demo / test data removes them.
 - `docs/player-test-wind-elixir.png` is an untracked screenshot from an earlier test; not committed.

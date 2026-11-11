@@ -12,6 +12,11 @@ import {
   PLAN_RECIPES_SQL,
   saveSettings,
   setInventory,
+  logCraft,
+  recordSale,
+  deleteCraftLog,
+  CRAFT_LOG_SQL,
+  type CraftLogRow,
   SETTINGS_SQL,
   toPlanRecipe,
   resolvePrices,
@@ -143,5 +148,38 @@ describe("history", () => {
       gaps: [{ from: "2026-10-28T06:00:00.000Z", to: "2026-10-31T06:00:00.000Z", hours: 72 }],
     });
     expect(historySummary([], 24)).toEqual({ count: 0, from: null, to: null, gaps: [] });
+  });
+});
+
+describe("craft log", () => {
+  const entry = { itemId: 2, quantity: 4, marketId: 1, totalCost: 100, valuation: "cash" as const, estUnitPrice: 40, estProfit: 52 };
+
+  it("logs a craft, keeps an incomplete cost as null, then records and replaces the real sale", () => {
+    run(logCraft(entry));
+    run(logCraft({ ...entry, totalCost: null, estUnitPrice: null, estProfit: null }));
+    const rows = all<CraftLogRow>(CRAFT_LOG_SQL);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.total_cost === null)).toMatchObject({ est_unit_price: null, est_profit: null, sold_quantity: null });
+    const id = rows.find((r) => r.total_cost === 100)!.id;
+    run(recordSale(id, 4, 45, 500));
+    run(recordSale(id, 3, 50, 500));
+    expect(all<CraftLogRow>(CRAFT_LOG_SQL).find((r) => r.id === id)).toMatchObject({ sold_quantity: 3, sold_unit_price: 50, sold_commission_bps: 500 });
+    run(deleteCraftLog(id));
+    expect(all(CRAFT_LOG_SQL)).toHaveLength(1);
+  });
+
+  it("refuses impossible quantities and selling more than was crafted", () => {
+    expect(() => logCraft({ ...entry, quantity: 0 })).toThrow(RangeError);
+    expect(() => recordSale(1, 0, 10, 0)).toThrow(RangeError);
+    expect(() => recordSale(1, 1, -1, 0)).toThrow(RangeError);
+    run(logCraft(entry));
+    const { id } = all<CraftLogRow>(CRAFT_LOG_SQL)[0];
+    expect(() => run(recordSale(id, 5, 10, 0))).toThrow(); // CHECK sold_quantity <= quantity
+  });
+
+  it("follows its item when the item is deleted", () => {
+    run(logCraft(entry));
+    db.exec("DELETE FROM items WHERE id = 2");
+    expect(all(CRAFT_LOG_SQL)).toEqual([]);
   });
 });

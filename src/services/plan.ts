@@ -1,6 +1,8 @@
 import { getDb } from "./db";
 import type { PlanRecipe } from "../domain/calculations/craftPlan";
 import {
+  CRAFT_LOG_SQL,
+  type CraftLogRow,
   INVENTORY_SQL,
   LATEST_PRICES_SQL,
   MARKETS_SQL,
@@ -26,12 +28,13 @@ export interface PlanItem {
 
 export async function loadWorkspace() {
   const db = await getDb();
-  const [items, recipeRows, inventoryRows, settingsRows, markets] = await Promise.all([
+  const [items, recipeRows, inventoryRows, settingsRows, markets, craftLog] = await Promise.all([
     db.select<PlanItem[]>(PLAN_ITEMS_SQL),
     db.select<PlanRecipeRow[]>(PLAN_RECIPES_SQL),
     db.select<{ item_id: number; quantity: number }[]>(INVENTORY_SQL),
     db.select<{ key: string; value: string }[]>(SETTINGS_SQL),
     db.select<MarketRow[]>(MARKETS_SQL),
+    db.select<CraftLogRow[]>(CRAFT_LOG_SQL),
   ]);
   const settings = toSettings(settingsRows);
   const market = markets.find((m) => m.id === settings.activeMarketId) ?? null;
@@ -46,6 +49,7 @@ export async function loadWorkspace() {
     recipesByOutput,
     professionByRecipe: new Map(recipeRows.map((r) => [r.id, r.profession])),
     inventory: new Map(inventoryRows.map((r) => [r.item_id, r.quantity])),
+    craftLog,
     settings,
     markets,
     market,
