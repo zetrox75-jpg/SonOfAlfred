@@ -55,7 +55,7 @@ test `tests/i18n.test.ts`); French item names (`src/data/itemNamesFr.json`); upd
 (`src/app/UpdateBanner.tsx`). Status messages built in services (import results, provider errors)
 are still English. Seen in the `.e2e` app only by the user.
 
-## Added 2026-11-10 (uncommitted, on `main`)
+## Added 2026-11-10 (committed on branch `feat/craft-log-stock-scanner`, not pushed, not merged)
 
 "Mark plan as crafted" on the Inventory page ("Current plan" card): after crafting in game, one
 confirmed click removes the stock the plan used, keeps batch surplus and adds the crafted output.
